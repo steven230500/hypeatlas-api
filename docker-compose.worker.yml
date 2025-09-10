@@ -1,0 +1,10 @@
+services:
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.worker
+    environment:
+      POSTGRES_URL: ${POSTGRES_URL}
+      WORKER_INTERVAL_SEC: "30"
+    depends_on:
+      - db

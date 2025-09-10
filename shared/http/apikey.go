@@ -15,8 +15,8 @@ func ApiKeyMiddleware(next http.Handler) http.Handler {
 			allow[k] = struct{}{}
 		}
 	}
-	// si no hay keys definidas, passa-through
 	if len(allow) == 0 {
+		// sin llaves configuradas, no exigir
 		return next
 	}
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

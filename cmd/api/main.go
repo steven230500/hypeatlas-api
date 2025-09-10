@@ -28,21 +28,21 @@ import (
 
 func main() {
 	log := logger.New()
+
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"
 	}
-
 	storage := os.Getenv("STORAGE") // "memory" | "postgres"
 
-	// Pool Postgres si aplica
+	// Pool de Postgres (si aplica)
 	var pool *pgxpool.Pool
 	if storage == "postgres" {
 		pool = sharedpg.MustOpen()
 		log.Info().Msg("postgres pool initialized")
 	}
 
-	// === RELAY repo
+	// ==== RELAY
 	var relayRepo relayout.Repository
 	if pool != nil {
 		relayRepo = relaypg.New(pool)
@@ -54,7 +54,7 @@ func main() {
 	relayService := relaysvc.New(relayRepo)
 	relayHandler := relayhttp.New(relayService)
 
-	// === SIGNAL repo
+	// ==== SIGNAL
 	var signalRepo signalout.Repository
 	if pool != nil {
 		signalRepo = signalpg.New(pool)
@@ -66,12 +66,28 @@ func main() {
 	signalService := signalsvc.New(signalRepo)
 	signalHandler := signalhttp.New(signalService)
 
-	// Router
+	// ==== Router
 	r := sharedhttp.NewRouter()
-	r.Get("/healthz", func(w http.ResponseWriter, _ *http.Request) { w.Write([]byte("ok")) })
+
+	// Healthcheck
+	r.Get("/healthz", func(w http.ResponseWriter, _ *http.Request) {
+		_, _ = w.Write([]byte("ok"))
+	})
+
 	r.Route("/v1", func(v chi.Router) {
+		// GETs públicos
 		relayHandler.Register(v)
 		signalHandler.Register(v)
+
+		if pool != nil {
+			v.Route("/ingest", func(ix chi.Router) {
+				ix.Use(sharedhttp.ApiKeyMiddleware)
+				relayIngest := relayhttp.NewIngest(pool)
+				signalIngest := signalhttp.NewIngest(pool)
+				ix.Route("/relay", relayIngest.Register)
+				ix.Route("/signal", signalIngest.Register)
+			})
+		}
 	})
 
 	log.Info().Str("port", port).Msg("api up")
