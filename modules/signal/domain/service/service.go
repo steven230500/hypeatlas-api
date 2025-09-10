@@ -26,3 +26,20 @@ func (s *svc) ListChanges(ctx context.Context, game, version, entityType string)
 	}
 	return s.repo.Changes(ctx, game, version, entityType)
 }
+
+func (s *svc) ListLeagues(ctx context.Context, game, region string) ([]entities.League, error) {
+	if game == "" {
+		return nil, errors.New("game required")
+	}
+	return s.repo.Leagues(ctx, game, region)
+}
+
+func (s *svc) ListComps(ctx context.Context, game, region, league, patch, mapp, side string, limit int) ([]entities.Comp, error) {
+	if game == "" || region == "" || patch == "" {
+		return nil, errors.New("game, region and patch required")
+	}
+	if limit <= 0 || limit > 200 {
+		limit = 50
+	}
+	return s.repo.Comps(ctx, game, region, league, patch, mapp, side, limit)
+}

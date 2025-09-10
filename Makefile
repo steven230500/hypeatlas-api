@@ -1,11 +1,23 @@
-dev:
-	go run ./cmd/api
+db-up:
+\tdocker-compose up -d
 
-build:
-	go build -o bin/api ./cmd/api
+db-down:
+\tdocker-compose down
 
-test:
-	go test ./...
+migrate-up:
+\t$(shell go env GOPATH)/bin/goose -dir ./db/migrations postgres "$(POSTGRES_URL)" up
 
-docker-build:
-	docker build -t hypeatlas-api .
+migrate-down:
+\t$(shell go env GOPATH)/bin/goose -dir ./db/migrations postgres "$(POSTGRES_URL)" down
+
+run:
+\tSTORAGE=postgres POSTGRES_URL=$(POSTGRES_URL) go run ./cmd/api
+
+worker:
+\tPOSTGRES_URL=$(POSTGRES_URL) go run ./cmd/worker
+
+migrate-up:
+\t$(shell go env GOPATH)/bin/goose -dir ./db/migrations postgres "$(POSTGRES_URL)" up
+
+migrate-status:
+\t$(shell go env GOPATH)/bin/goose -dir ./db/migrations postgres "$(POSTGRES_URL)" status
