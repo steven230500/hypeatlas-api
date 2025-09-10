@@ -1,11 +1,12 @@
 # API público con HTTPS automático
 api.hypeatlas.app {
     encode zstd gzip
+
+    # CORS simple; tu API también valida CORS por ENV si quieres
     @cors {
-        header Origin * 
+        header Origin *
     }
     header {
-        # CORS sencillo (ajustado por tu .env también)
         Access-Control-Allow-Origin "{http.request.header.Origin}"
         Access-Control-Allow-Methods "GET, POST, OPTIONS"
         Access-Control-Allow-Headers "Authorization, Content-Type, X-API-Key"
@@ -15,5 +16,7 @@ api.hypeatlas.app {
     handle_options {
         respond "" 204
     }
+
+    # La API corre detrás en el mismo docker network
     reverse_proxy api:8080
 }

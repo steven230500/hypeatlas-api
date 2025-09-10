@@ -10,12 +10,13 @@ import (
 
 type Repo struct{ db *pgxpool.Pool }
 
-// EXISTENTE: usado por la API (devuelve la interfaz)
+// API (devuelve interfaz)
 func New(db *pgxpool.Pool) out.Repository { return &Repo{db: db} }
 
-// NUEVO: usado por el worker (devuelve el tipo concreto)
+// Worker (tipo concreto)
 func NewRaw(db *pgxpool.Pool) *Repo { return &Repo{db: db} }
 
+// Lee co-streams en vivo por evento y (opcional) idioma.
 func (r *Repo) FindLiveByEvent(ctx context.Context, eventID, lang string) ([]entities.CoStream, error) {
 	const q = `
 SELECT cs.id, cs.event_id, cs.platform, cs.url, cs.lang, cs.country,
@@ -37,7 +38,10 @@ ORDER BY cs.viewers DESC NULLS LAST, cs.id;
 	var list []entities.CoStream
 	for rows.Next() {
 		var cs entities.CoStream
-		if err := rows.Scan(&cs.ID, &cs.EventID, &cs.Platform, &cs.URL, &cs.Lang, &cs.Country, &cs.Viewers, &cs.Verified, &cs.Live); err != nil {
+		if err := rows.Scan(
+			&cs.ID, &cs.EventID, &cs.Platform, &cs.URL, &cs.Lang, &cs.Country,
+			&cs.Viewers, &cs.Verified, &cs.Live,
+		); err != nil {
 			return nil, err
 		}
 		list = append(list, cs)

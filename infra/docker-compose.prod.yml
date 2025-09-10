@@ -7,10 +7,10 @@ x-common-env: &common_env
 
 services:
   api:
-    image: ghcr.io/${GHCR_OWNER:-YOUR_GH_USER}/hypeatlas-api-api:${TAG:-latest}
+    image: ghcr.io/steven230500/hypeatlas-api-api:${TAG:-latest}
     <<: *common_env
     ports:
-      - "127.0.0.1:8080:8080"   # solo loopback; Caddy hace el reverse-proxy
+      - "127.0.0.1:8080:8080"  # Solo loopback; Caddy hace de proxy
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8080/healthz"]
       interval: 15s
@@ -18,7 +18,7 @@ services:
       retries: 5
 
   worker:
-    image: ghcr.io/${GHCR_OWNER:-YOUR_GH_USER}/hypeatlas-api-worker:${TAG:-latest}
+    image: ghcr.io/steven230500/hypeatlas-api-worker:${TAG:-latest}
     <<: *common_env
 
   caddy:
