@@ -1,0 +1,39 @@
+version: "3.9"
+
+x-common-env: &common_env
+  env_file:
+    - ./.env.prod
+  restart: unless-stopped
+
+services:
+  api:
+    image: ghcr.io/${GHCR_OWNER:-YOUR_GH_USER}/hypeatlas-api-api:${TAG:-latest}
+    <<: *common_env
+    ports:
+      - "127.0.0.1:8080:8080"   # solo loopback; Caddy hace el reverse-proxy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8080/healthz"]
+      interval: 15s
+      timeout: 3s
+      retries: 5
+
+  worker:
+    image: ghcr.io/${GHCR_OWNER:-YOUR_GH_USER}/hypeatlas-api-worker:${TAG:-latest}
+    <<: *common_env
+
+  caddy:
+    image: caddy:2.8
+    restart: unless-stopped
+    depends_on:
+      - api
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+
+volumes:
+  caddy-data:
+  caddy-config:

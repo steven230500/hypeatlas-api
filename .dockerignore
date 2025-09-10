@@ -1,0 +1,11 @@
+.git
+.github
+**/*.md
+**/*.log
+**/.DS_Store
+/mnt
+/tmp
+/node_modules
+dist
+bin
+coverage

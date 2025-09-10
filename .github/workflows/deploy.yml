@@ -1,0 +1,39 @@
+name: deploy
+on:
+  workflow_run:
+    workflows: [ "docker-publish" ]
+    types: [ completed ]
+    branches: [ main ]
+
+jobs:
+  deploy:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: SSH into droplet and deploy
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          port: ${{ secrets.SSH_PORT || 22 }}
+          script_stop: true
+          envs: GHCR_USER,GHCR_PAT
+          script: |
+            set -euxo pipefail
+            cd /opt/hypeatlas
+
+            # login a GHCR si tienes imágenes privadas (si no hay PAT, se omite)
+            if [ -n "${GHCR_PAT:-}" ]; then
+              echo "$GHCR_PAT" | docker login ghcr.io -u "${GHCR_USER:-${USER}}" --password-stdin
+            fi
+
+            # pull & up
+            docker compose -f docker-compose.prod.yml pull
+            docker compose -f docker-compose.prod.yml up -d
+
+            # limpieza ligera
+            docker image prune -f || true
+
+            # sanity
+            curl -fsS http://127.0.0.1:8080/healthz

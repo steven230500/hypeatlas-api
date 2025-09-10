@@ -1,12 +1,19 @@
+# --- build stage ---
 FROM golang:1.22 AS build
-WORKDIR /app
+WORKDIR /src
 COPY go.mod go.sum ./
 RUN go mod download
-COPY . .
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o api ./cmd/api
 
-FROM gcr.io/distroless/static
+COPY . .
+ENV CGO_ENABLED=0 GOOS=linux GOARCH=amd64
+RUN go build -trimpath -ldflags="-s -w" -o /out/api ./cmd/api
+
+# --- runtime ---
+FROM alpine:3.20
+RUN addgroup -S app && adduser -S app -G app
+RUN apk add --no-cache ca-certificates tzdata
 WORKDIR /app
-COPY --from=build /app/api /app/
+COPY --from=build /out/api /app/api
+USER app
 EXPOSE 8080
 CMD ["/app/api"]

@@ -1,0 +1,19 @@
+# API público con HTTPS automático
+api.hypeatlas.app {
+    encode zstd gzip
+    @cors {
+        header Origin * 
+    }
+    header {
+        # CORS sencillo (ajustado por tu .env también)
+        Access-Control-Allow-Origin "{http.request.header.Origin}"
+        Access-Control-Allow-Methods "GET, POST, OPTIONS"
+        Access-Control-Allow-Headers "Authorization, Content-Type, X-API-Key"
+        Access-Control-Allow-Credentials "true"
+        defer
+    }
+    handle_options {
+        respond "" 204
+    }
+    reverse_proxy api:8080
+}
