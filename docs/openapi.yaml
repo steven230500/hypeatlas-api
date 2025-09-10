@@ -1,0 +1,48 @@
+openapi: 3.0.3
+info:
+  title: HypeAtlas API
+  version: 0.1.0
+servers:
+  - url: https://api.hypeatlas.app
+paths:
+  /healthz:
+    get:
+      responses:
+        "200": { description: OK }
+  /v1/relay/costreams:
+    get:
+      parameters:
+        - in: query
+          name: event_id
+          required: true
+          schema: { type: string }
+        - in: query
+          name: lang
+          schema: { type: string }
+      responses:
+        "200": { description: OK }
+  /v1/signal/patches:
+    get:
+      parameters:
+        - in: query
+          name: game
+          required: true
+          schema: { type: string }
+      responses:
+        "200": { description: OK }
+  /v1/signal/changes:
+    get:
+      parameters:
+        - in: query
+          name: game
+          required: true
+          schema: { type: string }
+        - in: query
+          name: version
+          required: true
+          schema: { type: string }
+        - in: query
+          name: type
+          schema: { type: string }
+      responses:
+        "200": { description: OK }
