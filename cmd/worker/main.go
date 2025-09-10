@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/rs/zerolog/log"
@@ -12,23 +13,9 @@ import (
 	relaypg "github.com/steven230500/hypeatlas-api/modules/relay/infra/repository/postgres"
 	signalpg "github.com/steven230500/hypeatlas-api/modules/signal/infra/repository/postgres"
 	pg "github.com/steven230500/hypeatlas-api/shared/db"
-)
 
-type CoStreamSample struct {
-	EventSlug   string
-	EventTitle  string
-	Game        string // "val"|"lol"
-	League      string
-	Platform    string // "twitch"|"youtube"
-	Handle      string
-	URL         string
-	Lang        string
-	Country     string
-	Verified    bool
-	Viewers     int
-	IsLive      bool
-	StartsAtISO *string
-}
+	twitchprov "github.com/steven230500/hypeatlas-api/providers/twitch"
+)
 
 type CompSample struct {
 	Game, Region, League, Patch, Map, Side string
@@ -43,9 +30,17 @@ func main() {
 	pool := pg.MustOpen()
 	defer pool.Close()
 
-	// Ojo: usamos NewRaw para obtener *Repo (tipo concreto)
 	relayRepo := relaypg.NewRaw(pool)
 	signalRepo := signalpg.NewRaw(pool)
+
+	// Twitch config
+	twID := os.Getenv("TWITCH_CLIENT_ID")
+	twSec := os.Getenv("TWITCH_SECRET")
+	twHandles := strings.Split(strings.ToLower(os.Getenv("TWITCH_HANDLES")), ",")
+	var tw *twitchprov.Client
+	if twID != "" && twSec != "" {
+		tw = twitchprov.New(twID, twSec)
+	}
 
 	interval := 30 * time.Second
 	if v := os.Getenv("WORKER_INTERVAL_SEC"); v != "" {
@@ -60,83 +55,75 @@ func main() {
 
 	log.Info().Dur("interval", interval).Msg("worker started")
 
-	// primera corrida inmediata y luego cada tick
-	runOnce(ctx, relayRepo, signalRepo)
+	runOnce(ctx, relayRepo, signalRepo, tw, twHandles)
 	for range ticker.C {
-		runOnce(ctx, relayRepo, signalRepo)
+		runOnce(ctx, relayRepo, signalRepo, tw, twHandles)
 	}
 }
 
-func runOnce(ctx context.Context, relayRepo *relaypg.Repo, signalRepo *signalpg.Repo) {
-	// 1) Ingesta de co-streams (mock)
-	streams := mockPullCoStreams()
-	for _, s := range streams {
-		if err := relayRepo.UpsertCoStream(ctx,
-			s.EventSlug, s.EventTitle, s.Game, s.League, s.StartsAtISO,
-			s.Platform, s.Handle, s.URL, s.Lang, s.Country, s.Verified, s.Viewers, s.IsLive,
-		); err != nil {
-			log.Error().Err(err).Str("event", s.EventSlug).Str("handle", s.Handle).Msg("upsert co-stream failed")
+func runOnce(
+	ctx context.Context,
+	relayRepo *relaypg.Repo,
+	signalRepo *signalpg.Repo,
+	tw *twitchprov.Client,
+	_ []string, // ya no usamos TWITCH_HANDLES del .env
+) {
+	// ====== TWITCH: lee handles desde DB ======
+	if tw != nil {
+		creators, err := relayRepo.ListCreatorHandles(ctx, "twitch", true)
+		if err != nil {
+			log.Error().Err(err).Msg("list twitch creators failed")
+		} else if len(creators) > 0 {
+			// chunk hasta 100 logins por llamada
+			var logins []string
+			for _, c := range creators {
+				logins = append(logins, c.Handle)
+			}
+			for _, chunk := range twitchprov.Chunk(logins, 100) {
+				streams, err := tw.GetStreamsByLogin(ctx, chunk)
+				if err != nil {
+					log.Error().Err(err).Msg("twitch GetStreams failed")
+					continue
+				}
+				for login, s := range streams {
+					url := "https://twitch.tv/" + login
+					// evento genérico; luego mapeamos a torneos reales
+					eventSlug, eventTitle, game, league := "misc-live", "Community Live", "val", "Community"
+					if err := relayRepo.UpsertCoStream(ctx,
+						eventSlug, eventTitle, game, league, nil,
+						"twitch", login, url, s.Language, "", true,
+						s.ViewerCount, s.Type == "live",
+					); err != nil {
+						log.Error().Err(err).Str("login", login).Msg("upsert co-stream failed")
+					}
+				}
+			}
 		}
 	}
 
-	// 2) Ingesta de comps/meta (mock)
-	comps := mockPullComps()
-	for _, c := range comps {
+	// ====== META/COMPS (mock temporal)
+	for _, c := range mockPullComps() {
 		raw, _ := json.Marshal(c.Slots)
 		if err := signalRepo.UpsertComp(ctx,
-			c.Game, c.Region, c.League, c.Patch, c.Map, c.Side,
-			string(raw), c.Pick, c.Win, c.Delta,
+			c.Game, c.Region, c.League, c.Patch, c.Map, c.Side, string(raw), c.Pick, c.Win, c.Delta,
 		); err != nil {
 			log.Error().Err(err).Str("patch", c.Patch).Msg("upsert comp failed")
 		}
 	}
 
-	log.Info().Int("streams", len(streams)).Int("comps", len(comps)).Msg("ingest cycle OK")
-}
-
-// ========== MOCKS ==========
-
-func mockPullCoStreams() []CoStreamSample {
-	return []CoStreamSample{
-		{
-			EventSlug:  "vct-emea-final",
-			EventTitle: "VCT EMEA Final",
-			Game:       "val",
-			League:     "VCT EMEA",
-			Platform:   "twitch",
-			Handle:     "caster1",
-			URL:        "https://twitch.tv/caster1",
-			Lang:       "es",
-			Country:    "ES",
-			Verified:   true,
-			Viewers:    9100,
-			IsLive:     true,
-		},
-	}
+	log.Info().Msg("ingest cycle OK")
 }
 
 func mockPullComps() []CompSample {
 	pick := 25.1
 	win := 53.2
 	delta := 1.8
-	return []CompSample{
-		{
-			Game:   "val",
-			Region: "EMEA",
-			League: "VCT EMEA",
-			Patch:  "9.15",
-			Map:    "Ascent",
-			Side:   "attack",
-			Slots: map[string]any{
-				"roles": []string{"smokes", "initiator", "duelist", "sentinel", "flex"},
-				"members": []map[string]string{
-					{"agent": "omen"}, {"agent": "sova"}, {"agent": "jett"},
-					{"agent": "killjoy"}, {"agent": "skye"},
-				},
-			},
-			Pick:  &pick,
-			Win:   &win,
-			Delta: &delta,
+	return []CompSample{{
+		Game: "val", Region: "EMEA", League: "VCT EMEA", Patch: "9.15", Map: "Ascent", Side: "attack",
+		Slots: map[string]any{
+			"roles":   []string{"smokes", "initiator", "duelist", "sentinel", "flex"},
+			"members": []map[string]string{{"agent": "omen"}, {"agent": "sova"}, {"agent": "jett"}, {"agent": "killjoy"}, {"agent": "skye"}},
 		},
-	}
+		Pick: &pick, Win: &win, Delta: &delta,
+	}}
 }
