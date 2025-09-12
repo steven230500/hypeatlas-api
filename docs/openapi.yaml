@@ -1,40 +1,129 @@
+openapi: 3.1.0
+info:
+  title: HypeAtlas API
+  version: 1.0.0
+  description: |
+    API pública de HypeAtlas: Signal (MetaLens), Relay y Comps.
+servers:
+  - url: https://api.hypeatlas.app
+    description: Production
+  - url: http://localhost:8080
+    description: Local
+
+paths:
+  /healthz:
+    get:
+      summary: Healthcheck
+      operationId: healthz
+      responses:
+        '200':
+          description: OK
+          content:
+            text/plain:
+              schema: { type: string, example: ok }
+
   /v1/signal/leagues:
     get:
+      summary: Listar ligas por juego y región
+      operationId: listLeagues
       parameters:
         - in: query
           name: game
           required: true
-          schema: { type: string }
+          description: Id del juego (p. ej. "lol" | "val")
+          schema: { type: string, example: lol }
         - in: query
           name: region
-          schema: { type: string }
-      responses: { '200': { description: OK } }
+          required: false
+          description: Región (p. ej. "EMEA", "APAC", "AMERICAS")
+          schema: { type: string, example: EMEA }
+      responses:
+        '200':
+          description: Lista de ligas
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: '#/components/schemas/League' }
 
   /v1/signal/comps:
     get:
+      summary: Listar composiciones (LoL/VAL) filtradas
+      operationId: listComps
       parameters:
         - in: query
           name: game
           required: true
-          schema: { type: string }
+          description: "lol" o "val"
+          schema: { type: string, example: lol }
         - in: query
           name: region
           required: true
-          schema: { type: string }
+          schema: { type: string, example: EMEA }
         - in: query
           name: league
-          schema: { type: string }
+          required: false
+          schema: { type: string, example: LEC }
         - in: query
           name: patch
           required: true
-          schema: { type: string }
+          schema: { type: string, example: "14.14" }
         - in: query
           name: map
-          schema: { type: string }
+          required: false
+          description: Para VALORANT
+          schema: { type: string, example: Ascent }
         - in: query
           name: side
-          schema: { type: string }
+          required: false
+          description: LoL (blue|red) o VAL (attack|defense)
+          schema: { type: string, example: blue }
         - in: query
           name: limit
-          schema: { type: integer, default: 50 }
-      responses: { '200': { description: OK } }
+          required: false
+          schema: { type: integer, default: 50, minimum: 1, maximum: 100 }
+      responses:
+        '200':
+          description: Lista de composiciones
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: '#/components/schemas/Comp' }
+
+components:
+  schemas:
+    League:
+      type: object
+      properties:
+        id:     { type: string, example: lec }
+        game:   { type: string, example: lol }
+        region: { type: string, example: EMEA }
+        name:   { type: string, example: LEC }
+        slug:   { type: string, example: lec }
+      required: [id, game, region, name, slug]
+
+    Comp:
+      type: object
+      properties:
+        id:       { type: string, example: lol-comp-1 }
+        game:     { type: string, example: lol }
+        region:   { type: string, example: EMEA }
+        league:   { type: string, nullable: true, example: LEC }
+        patch:    { type: string, example: "14.14" }
+        map:      { type: string, nullable: true, example: Ascent }
+        side:     { type: string, nullable: true, example: blue }
+        slots:
+          description: JSON con 5 slots (LoL: TOP/JUNG/MID/ADC/SUP; VAL: 5 agentes)
+          type: string
+          example: '{"slots":["Aatrox","Vi","Azir","Zeri","Rakan"]}'
+        pick_rate: { type: number, nullable: true, example: 12.4 }
+        win_rate:  { type: number, nullable: true, example: 56.2 }
+        delta_win: { type: number, nullable: true, example: 3.1 }
+      required: [id, game, region, patch, slots]
