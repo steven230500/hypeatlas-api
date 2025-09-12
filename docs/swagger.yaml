@@ -1,0 +1,558 @@
+definitions:
+  github_com_steven230500_hypeatlas-api_modules_relay_domain_entities.CoStream:
+    properties:
+      country:
+        type: string
+      event_id:
+        type: string
+      id:
+        type: string
+      is_live:
+        type: boolean
+      lang:
+        type: string
+      platform:
+        description: twitch|youtube
+        type: string
+      url:
+        type: string
+      verified:
+        type: boolean
+      viewers:
+        type: integer
+    type: object
+  github_com_steven230500_hypeatlas-api_modules_relay_infra_repository_postgres.HypeMapItem:
+    properties:
+      country:
+        type: string
+      event_slug:
+        type: string
+      event_title:
+        type: string
+      game:
+        type: string
+      handle:
+        type: string
+      is_live:
+        type: boolean
+      lang:
+        type: string
+      league:
+        type: string
+      platform:
+        type: string
+      score:
+        type: number
+      viewers:
+        type: integer
+    type: object
+  github_com_steven230500_hypeatlas-api_modules_relay_infra_repository_postgres.HypeMapSummaryItem:
+    properties:
+      event_slug:
+        type: string
+      event_title:
+        type: string
+      game:
+        type: string
+      last_seen_at:
+        type: string
+      league:
+        type: string
+      streamers:
+        type: integer
+      total_viewers:
+        type: integer
+    type: object
+  github_com_steven230500_hypeatlas-api_modules_signal_domain_entities.Change:
+    properties:
+      entity_id:
+        type: string
+      entity_type:
+        description: champion|agent|item|weapon|map
+        type: string
+      field:
+        type: string
+      impact_score:
+        type: number
+      new:
+        type: string
+      old:
+        type: string
+      patch_id:
+        type: string
+    type: object
+  github_com_steven230500_hypeatlas-api_modules_signal_domain_entities.Comp:
+    properties:
+      delta_win:
+        type: number
+      game:
+        type: string
+      id:
+        type: string
+      league:
+        type: string
+      map:
+        type: string
+      patch:
+        type: string
+      pick_rate:
+        type: number
+      region:
+        type: string
+      side:
+        type: string
+      slots:
+        description: raw JSON (permitimos estructura libre)
+        type: string
+      win_rate:
+        type: number
+    type: object
+  github_com_steven230500_hypeatlas-api_modules_signal_domain_entities.League:
+    properties:
+      game:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      region:
+        type: string
+      slug:
+        type: string
+    type: object
+  github_com_steven230500_hypeatlas-api_modules_signal_domain_entities.Patch:
+    properties:
+      game:
+        description: '"lol" | "val"'
+        type: string
+      id:
+        type: string
+      released_at:
+        type: string
+      version:
+        type: string
+    type: object
+  modules_relay_infra_http.CoStreamsResp:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/github_com_steven230500_hypeatlas-api_modules_relay_domain_entities.CoStream'
+        type: array
+    type: object
+  modules_relay_infra_http.HypeMapLiveResp:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/github_com_steven230500_hypeatlas-api_modules_relay_infra_repository_postgres.HypeMapItem'
+        type: array
+      next_offset:
+        type: integer
+    type: object
+  modules_relay_infra_http.HypeMapSummaryResp:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/github_com_steven230500_hypeatlas-api_modules_relay_infra_repository_postgres.HypeMapSummaryItem'
+        type: array
+      next_offset:
+        type: integer
+    type: object
+  modules_relay_infra_http.upsertCoStreamReq:
+    properties:
+      country:
+        type: string
+      event_slug:
+        type: string
+      event_title:
+        type: string
+      game:
+        description: '"val"|"lol"'
+        type: string
+      handle:
+        type: string
+      is_live:
+        type: boolean
+      lang:
+        type: string
+      league:
+        description: opcional
+        type: string
+      platform:
+        description: '"twitch"|"youtube"'
+        type: string
+      starts_at:
+        type: string
+      url:
+        type: string
+      verified:
+        type: boolean
+      viewers:
+        type: integer
+    type: object
+  modules_signal_infra_http.ChangesResp:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/github_com_steven230500_hypeatlas-api_modules_signal_domain_entities.Change'
+        type: array
+    type: object
+  modules_signal_infra_http.CompsResp:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/github_com_steven230500_hypeatlas-api_modules_signal_domain_entities.Comp'
+        type: array
+    type: object
+  modules_signal_infra_http.LeaguesResp:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/github_com_steven230500_hypeatlas-api_modules_signal_domain_entities.League'
+        type: array
+    type: object
+  modules_signal_infra_http.PatchesResp:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/github_com_steven230500_hypeatlas-api_modules_signal_domain_entities.Patch'
+        type: array
+    type: object
+  modules_signal_infra_http.upsertCompReq:
+    properties:
+      delta_win:
+        type: number
+      game:
+        type: string
+      league:
+        type: string
+      map:
+        type: string
+      patch:
+        type: string
+      pick_rate:
+        type: number
+      region:
+        type: string
+      side:
+        type: string
+      slots:
+        additionalProperties: {}
+        type: object
+      win_rate:
+        type: number
+    type: object
+info:
+  contact: {}
+paths:
+  /v1/hypemap/live:
+    get:
+      parameters:
+      - description: val|lol
+        in: query
+        name: game
+        type: string
+      - description: es|en|fr|pt
+        in: query
+        name: lang
+        type: string
+      - default: 50
+        description: 1-100
+        in: query
+        maximum: 100
+        minimum: 1
+        name: limit
+        type: integer
+      - default: 0
+        description: paginación
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/modules_relay_infra_http.HypeMapLiveResp'
+        "500":
+          description: db error
+          schema:
+            type: string
+      summary: 'HypeMap: co-streams en vivo (ranking)'
+      tags:
+      - relay
+  /v1/hypemap/summary:
+    get:
+      parameters:
+      - description: val|lol
+        in: query
+        name: game
+        type: string
+      - description: es|en|fr|pt
+        in: query
+        name: lang
+        type: string
+      - default: 20
+        description: 1-100
+        in: query
+        maximum: 100
+        minimum: 1
+        name: limit
+        type: integer
+      - default: 0
+        description: paginación
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/modules_relay_infra_http.HypeMapSummaryResp'
+        "500":
+          description: db error
+          schema:
+            type: string
+      summary: 'HypeMap: resumen por evento (agregado)'
+      tags:
+      - relay
+  /v1/ingest/relay/costreams:upsert:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/modules_relay_infra_http.upsertCoStreamReq'
+      responses:
+        "204":
+          description: no content
+        "400":
+          description: bad json
+          schema:
+            type: string
+        "500":
+          description: db error
+          schema:
+            type: string
+      security:
+      - ApiKeyAuth: []
+      summary: 'Ingest: upsert co-stream'
+      tags:
+      - ingest
+  /v1/ingest/signal/comps:upsert:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/modules_signal_infra_http.upsertCompReq'
+      responses:
+        "204":
+          description: no content
+        "400":
+          description: bad json
+          schema:
+            type: string
+        "500":
+          description: db error
+          schema:
+            type: string
+      security:
+      - ApiKeyAuth: []
+      summary: Upsert de composición (ingesta)
+      tags:
+      - ingest
+  /v1/relay/costreams:
+    get:
+      parameters:
+      - description: Slug o ID del evento (ej. vct-emea-final)
+        in: query
+        name: event_id
+        required: true
+        type: string
+      - description: Filtro por idioma (ej. es)
+        in: query
+        name: lang
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/modules_relay_infra_http.CoStreamsResp'
+        "400":
+          description: event_id required
+          schema:
+            type: string
+      summary: Listar co-streams en vivo de un evento
+      tags:
+      - relay
+  /v1/signal/changes:
+    get:
+      parameters:
+      - description: lol | val
+        enum:
+        - lol
+        - val
+        in: query
+        name: game
+        required: true
+        type: string
+      - description: 'Ej: 14.14 | 9.15'
+        in: query
+        name: version
+        required: true
+        type: string
+      - description: agent|champion|item|weapon|map
+        enum:
+        - agent
+        - champion
+        - item
+        - weapon
+        - map
+        in: query
+        name: type
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/modules_signal_infra_http.ChangesResp'
+        "400":
+          description: game and version required
+          schema:
+            type: string
+      summary: Listar cambios de un parche
+      tags:
+      - signal
+  /v1/signal/comps:
+    get:
+      parameters:
+      - description: lol | val
+        enum:
+        - lol
+        - val
+        in: query
+        name: game
+        required: true
+        type: string
+      - description: EMEA
+        in: query
+        name: region
+        required: true
+        type: string
+      - description: LEC
+        in: query
+        name: league
+        type: string
+      - description: 14.14 | 9.15
+        in: query
+        name: patch
+        required: true
+        type: string
+      - description: Ascent (solo VAL)
+        in: query
+        name: map
+        type: string
+      - description: 'LoL: blue/red | VAL: attack/defense'
+        enum:
+        - blue
+        - red
+        - attack
+        - defense
+        in: query
+        name: side
+        type: string
+      - default: 50
+        description: 1-100
+        in: query
+        maximum: 200
+        minimum: 1
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/modules_signal_infra_http.CompsResp'
+        "400":
+          description: game, region and patch required
+          schema:
+            type: string
+      summary: Listar composiciones (LoL/VAL) filtradas
+      tags:
+      - signal
+  /v1/signal/leagues:
+    get:
+      parameters:
+      - description: lol | val
+        enum:
+        - lol
+        - val
+        in: query
+        name: game
+        required: true
+        type: string
+      - description: EMEA | APAC | AMERICAS
+        enum:
+        - EMEA
+        - APAC
+        - AMERICAS
+        in: query
+        name: region
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/modules_signal_infra_http.LeaguesResp'
+        "400":
+          description: game required
+          schema:
+            type: string
+      summary: Listar ligas por juego y región
+      tags:
+      - signal
+  /v1/signal/patches:
+    get:
+      parameters:
+      - description: lol | val
+        enum:
+        - lol
+        - val
+        in: query
+        name: game
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/modules_signal_infra_http.PatchesResp'
+        "400":
+          description: game required
+          schema:
+            type: string
+      summary: Listar parches por juego
+      tags:
+      - signal
+swagger: "2.0"

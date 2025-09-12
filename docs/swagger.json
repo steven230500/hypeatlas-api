@@ -1,0 +1,845 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "contact": {}
+    },
+    "paths": {
+        "/v1/hypemap/live": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "relay"
+                ],
+                "summary": "HypeMap: co-streams en vivo (ranking)",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "val|lol",
+                        "name": "game",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "es|en|fr|pt",
+                        "name": "lang",
+                        "in": "query"
+                    },
+                    {
+                        "maximum": 100,
+                        "minimum": 1,
+                        "type": "integer",
+                        "default": 50,
+                        "description": "1-100",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 0,
+                        "description": "paginación",
+                        "name": "offset",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/modules_relay_infra_http.HypeMapLiveResp"
+                        }
+                    },
+                    "500": {
+                        "description": "db error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/hypemap/summary": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "relay"
+                ],
+                "summary": "HypeMap: resumen por evento (agregado)",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "val|lol",
+                        "name": "game",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "es|en|fr|pt",
+                        "name": "lang",
+                        "in": "query"
+                    },
+                    {
+                        "maximum": 100,
+                        "minimum": 1,
+                        "type": "integer",
+                        "default": 20,
+                        "description": "1-100",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 0,
+                        "description": "paginación",
+                        "name": "offset",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/modules_relay_infra_http.HypeMapSummaryResp"
+                        }
+                    },
+                    "500": {
+                        "description": "db error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/ingest/relay/costreams:upsert": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "ingest"
+                ],
+                "summary": "Ingest: upsert co-stream",
+                "parameters": [
+                    {
+                        "description": "payload",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/modules_relay_infra_http.upsertCoStreamReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "no content"
+                    },
+                    "400": {
+                        "description": "bad json",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "db error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/ingest/signal/comps:upsert": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "ingest"
+                ],
+                "summary": "Upsert de composición (ingesta)",
+                "parameters": [
+                    {
+                        "description": "payload",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/modules_signal_infra_http.upsertCompReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "no content"
+                    },
+                    "400": {
+                        "description": "bad json",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "db error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/relay/costreams": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "relay"
+                ],
+                "summary": "Listar co-streams en vivo de un evento",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Slug o ID del evento (ej. vct-emea-final)",
+                        "name": "event_id",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filtro por idioma (ej. es)",
+                        "name": "lang",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/modules_relay_infra_http.CoStreamsResp"
+                        }
+                    },
+                    "400": {
+                        "description": "event_id required",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/signal/changes": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "signal"
+                ],
+                "summary": "Listar cambios de un parche",
+                "parameters": [
+                    {
+                        "enum": [
+                            "lol",
+                            "val"
+                        ],
+                        "type": "string",
+                        "description": "lol | val",
+                        "name": "game",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Ej: 14.14 | 9.15",
+                        "name": "version",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "enum": [
+                            "agent",
+                            "champion",
+                            "item",
+                            "weapon",
+                            "map"
+                        ],
+                        "type": "string",
+                        "description": "agent|champion|item|weapon|map",
+                        "name": "type",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/modules_signal_infra_http.ChangesResp"
+                        }
+                    },
+                    "400": {
+                        "description": "game and version required",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/signal/comps": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "signal"
+                ],
+                "summary": "Listar composiciones (LoL/VAL) filtradas",
+                "parameters": [
+                    {
+                        "enum": [
+                            "lol",
+                            "val"
+                        ],
+                        "type": "string",
+                        "description": "lol | val",
+                        "name": "game",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "EMEA",
+                        "name": "region",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "LEC",
+                        "name": "league",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "14.14 | 9.15",
+                        "name": "patch",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Ascent (solo VAL)",
+                        "name": "map",
+                        "in": "query"
+                    },
+                    {
+                        "enum": [
+                            "blue",
+                            "red",
+                            "attack",
+                            "defense"
+                        ],
+                        "type": "string",
+                        "description": "LoL: blue/red | VAL: attack/defense",
+                        "name": "side",
+                        "in": "query"
+                    },
+                    {
+                        "maximum": 200,
+                        "minimum": 1,
+                        "type": "integer",
+                        "default": 50,
+                        "description": "1-100",
+                        "name": "limit",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/modules_signal_infra_http.CompsResp"
+                        }
+                    },
+                    "400": {
+                        "description": "game, region and patch required",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/signal/leagues": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "signal"
+                ],
+                "summary": "Listar ligas por juego y región",
+                "parameters": [
+                    {
+                        "enum": [
+                            "lol",
+                            "val"
+                        ],
+                        "type": "string",
+                        "description": "lol | val",
+                        "name": "game",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "enum": [
+                            "EMEA",
+                            "APAC",
+                            "AMERICAS"
+                        ],
+                        "type": "string",
+                        "description": "EMEA | APAC | AMERICAS",
+                        "name": "region",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/modules_signal_infra_http.LeaguesResp"
+                        }
+                    },
+                    "400": {
+                        "description": "game required",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/signal/patches": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "signal"
+                ],
+                "summary": "Listar parches por juego",
+                "parameters": [
+                    {
+                        "enum": [
+                            "lol",
+                            "val"
+                        ],
+                        "type": "string",
+                        "description": "lol | val",
+                        "name": "game",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/modules_signal_infra_http.PatchesResp"
+                        }
+                    },
+                    "400": {
+                        "description": "game required",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "github_com_steven230500_hypeatlas-api_modules_relay_domain_entities.CoStream": {
+            "type": "object",
+            "properties": {
+                "country": {
+                    "type": "string"
+                },
+                "event_id": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "is_live": {
+                    "type": "boolean"
+                },
+                "lang": {
+                    "type": "string"
+                },
+                "platform": {
+                    "description": "twitch|youtube",
+                    "type": "string"
+                },
+                "url": {
+                    "type": "string"
+                },
+                "verified": {
+                    "type": "boolean"
+                },
+                "viewers": {
+                    "type": "integer"
+                }
+            }
+        },
+        "github_com_steven230500_hypeatlas-api_modules_relay_infra_repository_postgres.HypeMapItem": {
+            "type": "object",
+            "properties": {
+                "country": {
+                    "type": "string"
+                },
+                "event_slug": {
+                    "type": "string"
+                },
+                "event_title": {
+                    "type": "string"
+                },
+                "game": {
+                    "type": "string"
+                },
+                "handle": {
+                    "type": "string"
+                },
+                "is_live": {
+                    "type": "boolean"
+                },
+                "lang": {
+                    "type": "string"
+                },
+                "league": {
+                    "type": "string"
+                },
+                "platform": {
+                    "type": "string"
+                },
+                "score": {
+                    "type": "number"
+                },
+                "viewers": {
+                    "type": "integer"
+                }
+            }
+        },
+        "github_com_steven230500_hypeatlas-api_modules_relay_infra_repository_postgres.HypeMapSummaryItem": {
+            "type": "object",
+            "properties": {
+                "event_slug": {
+                    "type": "string"
+                },
+                "event_title": {
+                    "type": "string"
+                },
+                "game": {
+                    "type": "string"
+                },
+                "last_seen_at": {
+                    "type": "string"
+                },
+                "league": {
+                    "type": "string"
+                },
+                "streamers": {
+                    "type": "integer"
+                },
+                "total_viewers": {
+                    "type": "integer"
+                }
+            }
+        },
+        "github_com_steven230500_hypeatlas-api_modules_signal_domain_entities.Change": {
+            "type": "object",
+            "properties": {
+                "entity_id": {
+                    "type": "string"
+                },
+                "entity_type": {
+                    "description": "champion|agent|item|weapon|map",
+                    "type": "string"
+                },
+                "field": {
+                    "type": "string"
+                },
+                "impact_score": {
+                    "type": "number"
+                },
+                "new": {
+                    "type": "string"
+                },
+                "old": {
+                    "type": "string"
+                },
+                "patch_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_steven230500_hypeatlas-api_modules_signal_domain_entities.Comp": {
+            "type": "object",
+            "properties": {
+                "delta_win": {
+                    "type": "number"
+                },
+                "game": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "league": {
+                    "type": "string"
+                },
+                "map": {
+                    "type": "string"
+                },
+                "patch": {
+                    "type": "string"
+                },
+                "pick_rate": {
+                    "type": "number"
+                },
+                "region": {
+                    "type": "string"
+                },
+                "side": {
+                    "type": "string"
+                },
+                "slots": {
+                    "description": "raw JSON (permitimos estructura libre)",
+                    "type": "string"
+                },
+                "win_rate": {
+                    "type": "number"
+                }
+            }
+        },
+        "github_com_steven230500_hypeatlas-api_modules_signal_domain_entities.League": {
+            "type": "object",
+            "properties": {
+                "game": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "region": {
+                    "type": "string"
+                },
+                "slug": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_steven230500_hypeatlas-api_modules_signal_domain_entities.Patch": {
+            "type": "object",
+            "properties": {
+                "game": {
+                    "description": "\"lol\" | \"val\"",
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "released_at": {
+                    "type": "string"
+                },
+                "version": {
+                    "type": "string"
+                }
+            }
+        },
+        "modules_relay_infra_http.CoStreamsResp": {
+            "type": "object",
+            "properties": {
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_steven230500_hypeatlas-api_modules_relay_domain_entities.CoStream"
+                    }
+                }
+            }
+        },
+        "modules_relay_infra_http.HypeMapLiveResp": {
+            "type": "object",
+            "properties": {
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_steven230500_hypeatlas-api_modules_relay_infra_repository_postgres.HypeMapItem"
+                    }
+                },
+                "next_offset": {
+                    "type": "integer"
+                }
+            }
+        },
+        "modules_relay_infra_http.HypeMapSummaryResp": {
+            "type": "object",
+            "properties": {
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_steven230500_hypeatlas-api_modules_relay_infra_repository_postgres.HypeMapSummaryItem"
+                    }
+                },
+                "next_offset": {
+                    "type": "integer"
+                }
+            }
+        },
+        "modules_relay_infra_http.upsertCoStreamReq": {
+            "type": "object",
+            "properties": {
+                "country": {
+                    "type": "string"
+                },
+                "event_slug": {
+                    "type": "string"
+                },
+                "event_title": {
+                    "type": "string"
+                },
+                "game": {
+                    "description": "\"val\"|\"lol\"",
+                    "type": "string"
+                },
+                "handle": {
+                    "type": "string"
+                },
+                "is_live": {
+                    "type": "boolean"
+                },
+                "lang": {
+                    "type": "string"
+                },
+                "league": {
+                    "description": "opcional",
+                    "type": "string"
+                },
+                "platform": {
+                    "description": "\"twitch\"|\"youtube\"",
+                    "type": "string"
+                },
+                "starts_at": {
+                    "type": "string"
+                },
+                "url": {
+                    "type": "string"
+                },
+                "verified": {
+                    "type": "boolean"
+                },
+                "viewers": {
+                    "type": "integer"
+                }
+            }
+        },
+        "modules_signal_infra_http.ChangesResp": {
+            "type": "object",
+            "properties": {
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_steven230500_hypeatlas-api_modules_signal_domain_entities.Change"
+                    }
+                }
+            }
+        },
+        "modules_signal_infra_http.CompsResp": {
+            "type": "object",
+            "properties": {
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_steven230500_hypeatlas-api_modules_signal_domain_entities.Comp"
+                    }
+                }
+            }
+        },
+        "modules_signal_infra_http.LeaguesResp": {
+            "type": "object",
+            "properties": {
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_steven230500_hypeatlas-api_modules_signal_domain_entities.League"
+                    }
+                }
+            }
+        },
+        "modules_signal_infra_http.PatchesResp": {
+            "type": "object",
+            "properties": {
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_steven230500_hypeatlas-api_modules_signal_domain_entities.Patch"
+                    }
+                }
+            }
+        },
+        "modules_signal_infra_http.upsertCompReq": {
+            "type": "object",
+            "properties": {
+                "delta_win": {
+                    "type": "number"
+                },
+                "game": {
+                    "type": "string"
+                },
+                "league": {
+                    "type": "string"
+                },
+                "map": {
+                    "type": "string"
+                },
+                "patch": {
+                    "type": "string"
+                },
+                "pick_rate": {
+                    "type": "number"
+                },
+                "region": {
+                    "type": "string"
+                },
+                "side": {
+                    "type": "string"
+                },
+                "slots": {
+                    "type": "object",
+                    "additionalProperties": {}
+                },
+                "win_rate": {
+                    "type": "number"
+                }
+            }
+        }
+    }
+}

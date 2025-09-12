@@ -36,6 +36,16 @@ type upsertCoStreamReq struct {
 	IsLive   bool   `json:"is_live"`
 }
 
+// upsertCoStream godoc
+// @Summary     Ingest: upsert co-stream
+// @Tags        ingest
+// @Security    ApiKeyAuth
+// @Accept      json
+// @Param       body body   upsertCoStreamReq true "payload"
+// @Success     204 "no content"
+// @Failure     400 {string} string "bad json"
+// @Failure     500 {string} string "db error"
+// @Router      /v1/ingest/relay/costreams:upsert [post]
 func (h *IngestHandler) upsertCoStream(w http.ResponseWriter, r *http.Request) {
 	var req upsertCoStreamReq
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {

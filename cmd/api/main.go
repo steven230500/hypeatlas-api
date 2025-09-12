@@ -7,6 +7,8 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 
+	_ "github.com/steven230500/hypeatlas-api/docs" // paquete generado por swag
+
 	// RELAY
 	relayout "github.com/steven230500/hypeatlas-api/modules/relay/domain/ports/out"
 	relaysvc "github.com/steven230500/hypeatlas-api/modules/relay/domain/service"
@@ -35,12 +37,14 @@ func main() {
 	}
 	storage := os.Getenv("STORAGE")
 
+	// DB opcional
 	var pool *pgxpool.Pool
 	if storage == "postgres" {
 		pool = sharedpg.MustOpen()
 		log.Info().Msg("postgres pool initialized")
 	}
 
+	// RELAY
 	var relayRepo relayout.Repository
 	if pool != nil {
 		relayRepo = relaypg.New(pool)
@@ -52,7 +56,7 @@ func main() {
 	relayService := relaysvc.New(relayRepo)
 	relayHandler := relayhttp.New(relayService)
 
-	// ==== SIGNAL
+	// SIGNAL
 	var signalRepo signalout.Repository
 	if pool != nil {
 		signalRepo = signalpg.New(pool)
@@ -64,15 +68,21 @@ func main() {
 	signalService := signalsvc.New(signalRepo)
 	signalHandler := signalhttp.New(signalService)
 
-	// ==== Router (chi)
+	// Router
 	r := sharedhttp.NewRouter()
 
+	// Health (documentado)
+	// @Summary Healthcheck
+	// @Success 200 {string} string "ok"
+	// @Router /healthz [get]
 	r.Get("/healthz", func(w http.ResponseWriter, _ *http.Request) {
 		_, _ = w.Write([]byte("ok"))
 	})
 
-	MountDocsChi(r)
+	// Swagger
+	mountSwagger(r)
 
+	// API
 	r.Route("/v1", func(v chi.Router) {
 		relayHandler.Register(v)
 		signalHandler.Register(v)

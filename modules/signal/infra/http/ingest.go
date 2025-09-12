@@ -32,6 +32,16 @@ type upsertCompReq struct {
 	Delta  *float64       `json:"delta_win"`
 }
 
+// upsertComp godoc
+// @Summary     Upsert de composición (ingesta)
+// @Tags        ingest
+// @Security    ApiKeyAuth
+// @Accept      json
+// @Param       body body   upsertCompReq true "payload"
+// @Success     204 "no content"
+// @Failure     400 {string} string "bad json"
+// @Failure     500 {string} string "db error"
+// @Router      /v1/ingest/signal/comps:upsert [post]
 func (h *IngestHandler) upsertComp(w http.ResponseWriter, r *http.Request) {
 	var req upsertCompReq
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
