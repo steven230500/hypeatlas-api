@@ -1,3 +1,4 @@
+basePath: /
 definitions:
   github_com_steven230500_hypeatlas-api_modules_relay_domain_entities.CoStream:
     properties:
@@ -241,8 +242,12 @@ definitions:
       win_rate:
         type: number
     type: object
+host: api.hypeatlas.app
 info:
   contact: {}
+  description: Relay (HypeMap), Signal (MetaLens) y Comps & Leagues.
+  title: HypeAtlas API
+  version: "1.0"
 paths:
   /v1/hypemap/live:
     get:
@@ -555,4 +560,12 @@ paths:
       summary: Listar parches por juego
       tags:
       - signal
+schemes:
+- https
+- http
+securityDefinitions:
+  ApiKeyAuth:
+    in: header
+    name: X-API-Key
+    type: apiKey
 swagger: "2.0"

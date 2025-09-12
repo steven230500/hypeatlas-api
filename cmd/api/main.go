@@ -1,3 +1,16 @@
+//go:generate go run github.com/swaggo/swag/cmd/swag@v1.16.3 init --parseDependency --parseInternal -g cmd/api/main.go -o docs
+
+// @title           HypeAtlas API
+// @version         1.0
+// @description     Relay (HypeMap), Signal (MetaLens) y Comps & Leagues.
+// @schemes         https http
+// @host            api.hypeatlas.app
+// @BasePath        /
+
+// @securityDefinitions.apikey ApiKeyAuth
+// @in header
+// @name X-API-Key
+
 package main
 
 import (
@@ -35,7 +48,7 @@ func main() {
 	if port == "" {
 		port = "8080"
 	}
-	storage := os.Getenv("STORAGE")
+	storage := os.Getenv("STORAGE") // "memory" | "postgres"
 
 	// DB opcional
 	var pool *pgxpool.Pool
@@ -79,7 +92,7 @@ func main() {
 		_, _ = w.Write([]byte("ok"))
 	})
 
-	// Swagger
+	// Swagger UI + alias /openapi.json
 	mountSwagger(r)
 
 	// API
