@@ -91,6 +91,22 @@ func main() {
 		_, _ = w.Write([]byte("ok"))
 	})
 
+	// -- verificación Riot Games --
+	// @Summary Riot Games domain verification
+	// @Description Domain verification file for Riot Games API production key
+	// @Produce plain
+	// @Success 200 {string} string "verification code"
+	// @Router /riot.txt [get]
+	r.Get("/riot.txt", func(w http.ResponseWriter, r *http.Request) {
+		v := os.Getenv("RIOT_SITE_VERIFICATION")
+		if v == "" {
+			http.NotFound(w, r)
+			return
+		}
+		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+		_, _ = w.Write([]byte(v))
+	})
+
 	// Swagger UI + alias /openapi.json
 	mountSwagger(r)
 
