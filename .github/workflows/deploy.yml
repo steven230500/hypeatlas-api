@@ -1,9 +1,9 @@
 name: deploy
 on:
   workflow_run:
-    workflows: [ "docker-publish" ]
-    types: [ completed ]
-    branches: [ main ]
+    workflows: ["docker-publish"]
+    types: [completed]
+    branches: [main]
 
 jobs:
   deploy:
@@ -23,17 +23,42 @@ jobs:
             set -euxo pipefail
             cd /opt/hypeatlas
 
-            # login a GHCR si tienes imágenes privadas (si no hay PAT, se omite)
+            # (Opcional) login a GHCR si las imágenes son privadas
             if [ -n "${GHCR_PAT:-}" ]; then
               echo "$GHCR_PAT" | docker login ghcr.io -u "${GHCR_USER:-${USER}}" --password-stdin
             fi
 
-            # pull & up
-            docker compose -f docker-compose.prod.yml pull
-            docker compose -f docker-compose.prod.yml up -d
+            # Asegurar que el archivo de entorno existe
+            test -f .env.prod
 
-            # limpieza ligera
-            docker image prune -f || true
+            # Pull y recreate con env-file explícito
+            docker compose -f docker-compose.prod.yml --env-file .env.prod pull
+            docker compose -f docker-compose.prod.yml --env-file .env.prod up -d --force-recreate --remove-orphans
 
-            # sanity
+            # Esperar a que hypeatlas-api quede healthy (máx 120s)
+            timeout 120s bash -c '
+              until [ "$(docker inspect -f "{{.State.Health.Status}}" hypeatlas-api 2>/dev/null)" = "healthy" ]; do
+                docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+                sleep 3
+              done
+            '
+
+            # Sanity HTTP local (el compose publica en 127.0.0.1:8080)
             curl -fsS http://127.0.0.1:8080/healthz
+
+            # Limpieza ligera
+            docker image prune -f || true
+      - name: Dump logs if failed
+        if: failure()
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          port: ${{ secrets.SSH_PORT || 22 }}
+          script_stop: false
+          script: |
+            set -x
+            cd /opt/hypeatlas || exit 0
+            docker compose -f docker-compose.prod.yml ps || true
+            docker compose -f docker-compose.prod.yml logs --since=20m api || true
