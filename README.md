@@ -13,14 +13,24 @@ HypeAtlas is a comprehensive API platform that provides real-time meta-game anal
 ### 🎮 League of Legends Integration
 - **Champion-V3 API**: Weekly free champion rotation data
 - **League-V4 API**: Challenger league statistics and rankings
-- **Data Dragon**: Static game data including champion information
+- **Data Dragon API**: Complete static game data (champions, items, runes, summoner spells)
+- **Champion Mastery-V4**: Player mastery statistics and progression
 - **Rate Limiting**: Built-in rate limiter (18 req/s, 95 req/min) with automatic retry
+- **Patch Comparison**: Automatic detection of changes between game versions
 
 ### 📊 Advanced Analytics
 - **Impact Scoring**: Algorithm to calculate meta impact of champion rotations
 - **Probability Calculations**: Meta shift probability based on free champion tiers
 - **Role Analysis**: Detection of role concentrations in free champion pools
 - **Performance Metrics**: Pick rates, win rates, and ban rate analysis
+
+### 🎯 Data Dragon Integration
+- **Complete Champion Database**: Full champion statistics, abilities, and lore
+- **Item System**: Comprehensive item data with builds and recipes
+- **Rune Pages**: All rune trees and keystone combinations
+- **Summoner Spells**: Complete spell database with cooldowns and effects
+- **Patch Comparison**: Automatic change detection between game versions
+- **Real-time Updates**: Always up-to-date with latest game data
 
 ## 🌐 API Endpoints
 
@@ -43,6 +53,14 @@ HypeAtlas is a comprehensive API platform that provides real-time meta-game anal
 - `GET /v1/signal/comps` - Champion composition analysis
 - `GET /v1/signal/leagues` - League information
 - `GET /v1/signal/patches` - Available patches
+
+### Data Dragon API (Static Game Data)
+- `GET /v1/signal/riot/versions` - Get available game versions
+- `GET /v1/signal/riot/items/{version}` - Get items data for specific version
+- `GET /v1/signal/riot/runes/{version}` - Get runes data for specific version
+- `GET /v1/signal/riot/summoner-spells/{version}` - Get summoner spells data
+- `GET /v1/signal/riot/champions/{version}/{championID}` - Get detailed champion information
+- `GET /v1/signal/riot/patch-notes/{fromVersion}/{toVersion}` - Compare changes between patches
 
 ## 🛠 Installation & Setup
 
@@ -102,6 +120,28 @@ curl -s "http://localhost:8080/v1/signal/riot/metagame/league/na1/RANKED_SOLO_5x
 curl -s "http://localhost:8080/v1/hypemap/live?game=lol&limit=10" | jq .
 ```
 
+#### Data Dragon API Examples
+
+**Get Game Versions:**
+```bash
+curl -s "http://localhost:8080/v1/signal/riot/versions" | jq .
+```
+
+**Get Champion Details:**
+```bash
+curl -s "http://localhost:8080/v1/signal/riot/champions/15.18.1/Ahri" | jq .
+```
+
+**Get Items Data:**
+```bash
+curl -s "http://localhost:8080/v1/signal/riot/items/15.18.1" | jq '.data | keys | length'
+```
+
+**Compare Patch Changes:**
+```bash
+curl -s "http://localhost:8080/v1/signal/riot/patch-notes/15.17.1/15.18.1" | jq .
+```
+
 ## 🏗 Architecture
 
 ### Clean Architecture
@@ -122,6 +162,8 @@ curl -s "http://localhost:8080/v1/hypemap/live?game=lol&limit=10" | jq .
 - **GORM**: ORM with migrations
 - **Swagger**: API documentation
 - **Docker**: Containerization
+- **Data Dragon API**: Official League of Legends static data
+- **Riot Games APIs**: Champion rotations, league data, and player statistics
 
 ## 🔧 Configuration
 
@@ -195,7 +237,8 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 ## 🙏 Acknowledgments
 
 - **Riot Games**: For providing comprehensive League of Legends APIs
-- **Data Dragon**: For static game data and assets
+- **Data Dragon API**: For complete static game data including champions, items, runes, and summoner spells
+- **Riot Developer Community**: For documentation and support
 - **Open Source Community**: For the amazing Go ecosystem
 
 ---
