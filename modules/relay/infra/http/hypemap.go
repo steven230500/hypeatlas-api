@@ -6,14 +6,14 @@ import (
 	"strconv"
 
 	"github.com/go-chi/chi/v5"
-	relaypg "github.com/steven230500/hypeatlas-api/modules/relay/infra/repository/postgres"
+
+	"github.com/steven230500/hypeatlas-api/domain/entities"
+	in "github.com/steven230500/hypeatlas-api/modules/relay/domain/ports/in"
 )
 
-type HypeMapHandler struct {
-	Repo *relaypg.Repo
-}
+type HypeMapHandler struct{ svc in.Service }
 
-func NewHypeMapHandler(repo *relaypg.Repo) *HypeMapHandler { return &HypeMapHandler{Repo: repo} }
+func NewHypeMapHandler(s in.Service) *HypeMapHandler { return &HypeMapHandler{svc: s} }
 
 func (h *HypeMapHandler) Register(r chi.Router) {
 	r.Route("/hypemap", func(r chi.Router) {
@@ -22,17 +22,15 @@ func (h *HypeMapHandler) Register(r chi.Router) {
 	})
 }
 
-// ====== Swagger response wrappers ======
 type HypeMapLiveResp struct {
-	Items      []relaypg.HypeMapItem `json:"items"`
-	NextOffset int                   `json:"next_offset"`
+	Items      []entities.HypeMapItem `json:"items"`
+	NextOffset int                    `json:"next_offset"`
 }
 type HypeMapSummaryResp struct {
-	Items      []relaypg.HypeMapSummaryItem `json:"items"`
-	NextOffset int                          `json:"next_offset"`
+	Items      []entities.HypeMapSummaryItem `json:"items"`
+	NextOffset int                           `json:"next_offset"`
 }
 
-// live godoc
 // @Summary      HypeMap: co-streams en vivo (ranking)
 // @Tags         relay
 // @Param        game    query string false "val|lol"
@@ -41,29 +39,24 @@ type HypeMapSummaryResp struct {
 // @Param        offset  query int    false "paginación" default(0)
 // @Produce      json
 // @Success      200 {object} HypeMapLiveResp
-// @Failure      500 {string} string "db error"
 // @Router       /v1/hypemap/live [get]
 func (h *HypeMapHandler) live(w http.ResponseWriter, r *http.Request) {
 	q := r.URL.Query()
-	game := q.Get("game")
-	lang := q.Get("lang")
 	limit, _ := strconv.Atoi(q.Get("limit"))
 	offset, _ := strconv.Atoi(q.Get("offset"))
 
-	items, err := h.Repo.HypeMapLive(r.Context(), game, lang, limit, offset)
+	items, err := h.svc.HypeMapLive(r.Context(), q.Get("game"), q.Get("lang"), limit, offset)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	resp := map[string]any{
+	w.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(w).Encode(map[string]any{
 		"items":       items,
 		"next_offset": offset + len(items),
-	}
-	w.Header().Set("Content-Type", "application/json")
-	_ = json.NewEncoder(w).Encode(resp)
+	})
 }
 
-// summary godoc
 // @Summary      HypeMap: resumen por evento (agregado)
 // @Tags         relay
 // @Param        game    query string false "val|lol"
@@ -72,24 +65,20 @@ func (h *HypeMapHandler) live(w http.ResponseWriter, r *http.Request) {
 // @Param        offset  query int    false "paginación" default(0)
 // @Produce      json
 // @Success      200 {object} HypeMapSummaryResp
-// @Failure      500 {string} string "db error"
 // @Router       /v1/hypemap/summary [get]
 func (h *HypeMapHandler) summary(w http.ResponseWriter, r *http.Request) {
 	q := r.URL.Query()
-	game := q.Get("game")
-	lang := q.Get("lang")
 	limit, _ := strconv.Atoi(q.Get("limit"))
 	offset, _ := strconv.Atoi(q.Get("offset"))
 
-	items, err := h.Repo.HypeMapSummary(r.Context(), game, lang, limit, offset)
+	items, err := h.svc.HypeMapSummary(r.Context(), q.Get("game"), q.Get("lang"), limit, offset)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	resp := map[string]any{
+	w.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(w).Encode(map[string]any{
 		"items":       items,
 		"next_offset": offset + len(items),
-	}
-	w.Header().Set("Content-Type", "application/json")
-	_ = json.NewEncoder(w).Encode(resp)
+	})
 }

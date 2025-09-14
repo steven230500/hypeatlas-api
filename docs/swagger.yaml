@@ -1,28 +1,114 @@
 basePath: /
 definitions:
-  github_com_steven230500_hypeatlas-api_modules_relay_domain_entities.CoStream:
+  github_com_steven230500_hypeatlas-api_domain_entities.CoStream:
     properties:
       country:
         type: string
-      event_id:
+      created_at:
         type: string
-      id:
+      creator:
+        $ref: '#/definitions/github_com_steven230500_hypeatlas-api_domain_entities.Creator'
+      creator_uuid:
+        type: string
+      event:
+        $ref: '#/definitions/github_com_steven230500_hypeatlas-api_domain_entities.Event'
+      event_uuid:
         type: string
       is_live:
         type: boolean
       lang:
         type: string
+      last_seen_at:
+        type: string
       platform:
         description: twitch|youtube
         type: string
+      updated_at:
+        type: string
       url:
+        type: string
+      uuid:
         type: string
       verified:
         type: boolean
       viewers:
         type: integer
     type: object
-  github_com_steven230500_hypeatlas-api_modules_relay_infra_repository_postgres.HypeMapItem:
+  github_com_steven230500_hypeatlas-api_domain_entities.Comp:
+    properties:
+      created_at:
+        type: string
+      delta_win:
+        type: number
+      game:
+        type: string
+      league:
+        type: string
+      map:
+        type: string
+      patch:
+        type: string
+      pick_rate:
+        type: number
+      region:
+        type: string
+      side:
+        type: string
+      slots:
+        items:
+          type: integer
+        type: array
+      updated_at:
+        type: string
+      uuid:
+        type: string
+      win_rate:
+        type: number
+    type: object
+  github_com_steven230500_hypeatlas-api_domain_entities.Creator:
+    properties:
+      country:
+        type: string
+      created_at:
+        type: string
+      handle:
+        type: string
+      lang:
+        type: string
+      platform:
+        type: string
+      updated_at:
+        type: string
+      url:
+        type: string
+      uuid:
+        type: string
+      verified:
+        type: boolean
+    type: object
+  github_com_steven230500_hypeatlas-api_domain_entities.Event:
+    properties:
+      created_at:
+        type: string
+      ends_at:
+        type: string
+      game:
+        description: val|lol
+        type: string
+      league:
+        type: string
+      slug:
+        type: string
+      starts_at:
+        type: string
+      title:
+        type: string
+      updated_at:
+        type: string
+      uuid:
+        type: string
+    type: object
+  github_com_steven230500_hypeatlas-api_domain_entities.HypeMapItem:
     properties:
       country:
         type: string
@@ -47,7 +133,7 @@ definitions:
       viewers:
         type: integer
     type: object
-  github_com_steven230500_hypeatlas-api_modules_relay_infra_repository_postgres.HypeMapSummaryItem:
+  github_com_steven230500_hypeatlas-api_domain_entities.HypeMapSummaryItem:
     properties:
       event_slug:
         type: string
@@ -64,55 +150,11 @@ definitions:
       total_viewers:
         type: integer
     type: object
-  github_com_steven230500_hypeatlas-api_modules_signal_domain_entities.Change:
+  github_com_steven230500_hypeatlas-api_domain_entities.League:
     properties:
-      entity_id:
+      created_at:
         type: string
-      entity_type:
-        description: champion|agent|item|weapon|map
-        type: string
-      field:
-        type: string
-      impact_score:
-        type: number
-      new:
-        type: string
-      old:
-        type: string
-      patch_id:
-        type: string
-    type: object
-  github_com_steven230500_hypeatlas-api_modules_signal_domain_entities.Comp:
-    properties:
-      delta_win:
-        type: number
       game:
-        type: string
-      id:
-        type: string
-      league:
-        type: string
-      map:
-        type: string
-      patch:
-        type: string
-      pick_rate:
-        type: number
-      region:
-        type: string
-      side:
-        type: string
-      slots:
-        description: raw JSON (permitimos estructura libre)
-        type: string
-      win_rate:
-        type: number
-    type: object
-  github_com_steven230500_hypeatlas-api_modules_signal_domain_entities.League:
-    properties:
-      game:
-        type: string
-      id:
         type: string
       name:
         type: string
@@ -120,31 +162,67 @@ definitions:
         type: string
       slug:
         type: string
-    type: object
-  github_com_steven230500_hypeatlas-api_modules_signal_domain_entities.Patch:
-    properties:
-      game:
-        description: '"lol" | "val"'
+      updated_at:
         type: string
-      id:
+      uuid:
+        type: string
+    type: object
+  github_com_steven230500_hypeatlas-api_domain_entities.Patch:
+    properties:
+      changes:
+        items:
+          $ref: '#/definitions/github_com_steven230500_hypeatlas-api_domain_entities.PatchChange'
+        type: array
+      created_at:
+        type: string
+      game:
+        description: val|lol
         type: string
       released_at:
         type: string
+      updated_at:
+        type: string
+      uuid:
+        type: string
       version:
+        type: string
+    type: object
+  github_com_steven230500_hypeatlas-api_domain_entities.PatchChange:
+    properties:
+      created_at:
+        type: string
+      entity_id:
+        type: string
+      entity_type:
+        description: champion|agent|item|weapon|map
+        type: string
+      field:
+        type: string
+      id:
+        type: integer
+      impact_score:
+        type: number
+      new:
+        type: string
+      old:
+        type: string
+      patch_uuid:
+        type: string
+      updated_at:
         type: string
     type: object
   modules_relay_infra_http.CoStreamsResp:
     properties:
       items:
         items:
-          $ref: '#/definitions/github_com_steven230500_hypeatlas-api_modules_relay_domain_entities.CoStream'
+          $ref: '#/definitions/github_com_steven230500_hypeatlas-api_domain_entities.CoStream'
         type: array
     type: object
   modules_relay_infra_http.HypeMapLiveResp:
     properties:
       items:
         items:
-          $ref: '#/definitions/github_com_steven230500_hypeatlas-api_modules_relay_infra_repository_postgres.HypeMapItem'
+          $ref: '#/definitions/github_com_steven230500_hypeatlas-api_domain_entities.HypeMapItem'
         type: array
       next_offset:
         type: integer
@@ -153,7 +231,7 @@ definitions:
     properties:
       items:
         items:
-          $ref: '#/definitions/github_com_steven230500_hypeatlas-api_modules_relay_infra_repository_postgres.HypeMapSummaryItem'
+          $ref: '#/definitions/github_com_steven230500_hypeatlas-api_domain_entities.HypeMapSummaryItem'
         type: array
       next_offset:
         type: integer
@@ -167,7 +245,6 @@ definitions:
       event_title:
         type: string
       game:
-        description: '"val"|"lol"'
         type: string
       handle:
         type: string
@@ -176,10 +253,9 @@ definitions:
       lang:
         type: string
       league:
-        description: opcional
         type: string
       platform:
-        description: '"twitch"|"youtube"'
+        description: twitch|youtube
         type: string
       starts_at:
         type: string
@@ -194,28 +270,28 @@ definitions:
     properties:
       items:
         items:
-          $ref: '#/definitions/github_com_steven230500_hypeatlas-api_modules_signal_domain_entities.Change'
+          $ref: '#/definitions/github_com_steven230500_hypeatlas-api_domain_entities.PatchChange'
         type: array
     type: object
   modules_signal_infra_http.CompsResp:
     properties:
       items:
         items:
-          $ref: '#/definitions/github_com_steven230500_hypeatlas-api_modules_signal_domain_entities.Comp'
+          $ref: '#/definitions/github_com_steven230500_hypeatlas-api_domain_entities.Comp'
         type: array
     type: object
   modules_signal_infra_http.LeaguesResp:
     properties:
       items:
         items:
-          $ref: '#/definitions/github_com_steven230500_hypeatlas-api_modules_signal_domain_entities.League'
+          $ref: '#/definitions/github_com_steven230500_hypeatlas-api_domain_entities.League'
         type: array
     type: object
   modules_signal_infra_http.PatchesResp:
     properties:
       items:
         items:
-          $ref: '#/definitions/github_com_steven230500_hypeatlas-api_modules_signal_domain_entities.Patch'
+          $ref: '#/definitions/github_com_steven230500_hypeatlas-api_domain_entities.Patch'
         type: array
     type: object
   modules_signal_infra_http.upsertCompReq:
@@ -279,10 +355,6 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/modules_relay_infra_http.HypeMapLiveResp'
-        "500":
-          description: db error
-          schema:
-            type: string
       summary: 'HypeMap: co-streams en vivo (ranking)'
       tags:
       - relay
@@ -316,10 +388,6 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/modules_relay_infra_http.HypeMapSummaryResp'
-        "500":
-          description: db error
-          schema:
-            type: string
       summary: 'HypeMap: resumen por evento (agregado)'
       tags:
       - relay

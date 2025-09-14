@@ -5,15 +5,13 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/jackc/pgx/v5/pgxpool"
-	relaypg "github.com/steven230500/hypeatlas-api/modules/relay/infra/repository/postgres"
+
+	out "github.com/steven230500/hypeatlas-api/modules/relay/domain/ports/out"
 )
 
-type IngestHandler struct {
-	pool *pgxpool.Pool
-}
+type IngestHandler struct{ repo out.Repository }
 
-func NewIngest(pool *pgxpool.Pool) *IngestHandler { return &IngestHandler{pool: pool} }
+func NewIngest(repo out.Repository) *IngestHandler { return &IngestHandler{repo: repo} }
 
 func (h *IngestHandler) Register(r chi.Router) {
 	r.Post("/costreams:upsert", h.upsertCoStream)
@@ -22,11 +20,11 @@ func (h *IngestHandler) Register(r chi.Router) {
 type upsertCoStreamReq struct {
 	EventSlug  string  `json:"event_slug"`
 	EventTitle string  `json:"event_title"`
-	Game       string  `json:"game"`   // "val"|"lol"
-	League     string  `json:"league"` // opcional
+	Game       string  `json:"game"`
+	League     string  `json:"league"`
 	StartsAt   *string `json:"starts_at"`
 
-	Platform string `json:"platform"` // "twitch"|"youtube"
+	Platform string `json:"platform"` // twitch|youtube
 	Handle   string `json:"handle"`
 	URL      string `json:"url"`
 	Lang     string `json:"lang"`
@@ -36,7 +34,6 @@ type upsertCoStreamReq struct {
 	IsLive   bool   `json:"is_live"`
 }
 
-// upsertCoStream godoc
 // @Summary     Ingest: upsert co-stream
 // @Tags        ingest
 // @Security    ApiKeyAuth
@@ -52,8 +49,8 @@ func (h *IngestHandler) upsertCoStream(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "bad json", http.StatusBadRequest)
 		return
 	}
-	repo := relaypg.NewRaw(h.pool)
-	if err := repo.UpsertCoStream(
+
+	if err := h.repo.UpsertCoStream(
 		r.Context(),
 		req.EventSlug, req.EventTitle, req.Game, req.League, req.StartsAt,
 		req.Platform, req.Handle, req.URL, req.Lang, req.Country, req.Verified, req.Viewers, req.IsLive,
@@ -61,5 +58,6 @@ func (h *IngestHandler) upsertCoStream(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+
 	w.WriteHeader(http.StatusNoContent)
 }

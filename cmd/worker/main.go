@@ -10,11 +10,12 @@ import (
 
 	"github.com/rs/zerolog/log"
 
-	relaypg "github.com/steven230500/hypeatlas-api/modules/relay/infra/repository/postgres"
-	signalpg "github.com/steven230500/hypeatlas-api/modules/signal/infra/repository/postgres"
-	pg "github.com/steven230500/hypeatlas-api/shared/db"
-
+	relayout "github.com/steven230500/hypeatlas-api/modules/relay/domain/ports/out"
+	relayrepo "github.com/steven230500/hypeatlas-api/modules/relay/infra/repository"
+	signalout "github.com/steven230500/hypeatlas-api/modules/signal/domain/ports/out"
+	signalrepo "github.com/steven230500/hypeatlas-api/modules/signal/infra/repository"
 	twitchprov "github.com/steven230500/hypeatlas-api/providers/twitch"
+	sharedgorm "github.com/steven230500/hypeatlas-api/shared/db"
 )
 
 type CompSample struct {
@@ -27,11 +28,14 @@ func main() {
 	if os.Getenv("POSTGRES_URL") == "" {
 		log.Fatal().Msg("POSTGRES_URL missing")
 	}
-	pool := pg.MustOpen()
-	defer pool.Close()
+	db := sharedgorm.Connect()
+	defer func() {
+		sqlDB, _ := db.DB()
+		sqlDB.Close()
+	}()
 
-	relayRepo := relaypg.NewRaw(pool)
-	signalRepo := signalpg.NewRaw(pool)
+	relayRepo := relayrepo.New(db)
+	signalRepo := signalrepo.New(db)
 
 	// Twitch config
 	twID := os.Getenv("TWITCH_CLIENT_ID")
@@ -63,8 +67,8 @@ func main() {
 
 func runOnce(
 	ctx context.Context,
-	relayRepo *relaypg.Repo,
-	signalRepo *signalpg.Repo,
+	relayRepo relayout.Repository,
+	signalRepo signalout.Repository,
 	tw *twitchprov.Client,
 	_ []string, // ya no usamos TWITCH_HANDLES del .env
 ) {

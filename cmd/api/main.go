@@ -6,42 +6,37 @@
 // @schemes         https http
 // @host            api.hypeatlas.app
 // @BasePath        /
-
 // @securityDefinitions.apikey ApiKeyAuth
 // @in header
 // @name X-API-Key
-
 package main
 
 import (
+	"fmt"
 	"net/http"
 	"os"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/go-chi/chi/v5/middleware"
+	"github.com/joho/godotenv"
+	"gorm.io/gorm"
 
-	_ "github.com/steven230500/hypeatlas-api/docs" // paquete generado por swag
+	_ "github.com/steven230500/hypeatlas-api/docs"
 
-	// RELAY
-	relayout "github.com/steven230500/hypeatlas-api/modules/relay/domain/ports/out"
 	relaysvc "github.com/steven230500/hypeatlas-api/modules/relay/domain/service"
 	relayhttp "github.com/steven230500/hypeatlas-api/modules/relay/infra/http"
-	relaymem "github.com/steven230500/hypeatlas-api/modules/relay/infra/repository/memory"
-	relaypg "github.com/steven230500/hypeatlas-api/modules/relay/infra/repository/postgres"
+	relayrepo "github.com/steven230500/hypeatlas-api/modules/relay/infra/repository"
 
-	// SIGNAL
-	signalout "github.com/steven230500/hypeatlas-api/modules/signal/domain/ports/out"
-	signalsvc "github.com/steven230500/hypeatlas-api/modules/signal/domain/service"
 	signalhttp "github.com/steven230500/hypeatlas-api/modules/signal/infra/http"
-	signalmem "github.com/steven230500/hypeatlas-api/modules/signal/infra/repository/memory"
-	signalpg "github.com/steven230500/hypeatlas-api/modules/signal/infra/repository/postgres"
+	signalrepo "github.com/steven230500/hypeatlas-api/modules/signal/infra/repository"
 
-	sharedpg "github.com/steven230500/hypeatlas-api/shared/db"
+	sharedgorm "github.com/steven230500/hypeatlas-api/shared/db"
 	sharedhttp "github.com/steven230500/hypeatlas-api/shared/http"
 	"github.com/steven230500/hypeatlas-api/shared/logger"
 )
 
 func main() {
+	_ = godotenv.Load()
 	log := logger.New()
 
 	port := os.Getenv("PORT")
@@ -50,41 +45,45 @@ func main() {
 	}
 	storage := os.Getenv("STORAGE") // "memory" | "postgres"
 
-	// DB opcional
-	var pool *pgxpool.Pool
+	// DB (GORM)
+	var gdb *gorm.DB
 	if storage == "postgres" {
-		pool = sharedpg.MustOpen()
-		log.Info().Msg("postgres pool initialized")
+		gdb = sharedgorm.Connect()
+		sharedgorm.Migrate(gdb)
+		_ = sharedgorm.RunSeeds(gdb) // opcional (datos demo)
+		log.Info().Msg("gorm postgres initialized")
 	}
 
 	// RELAY
-	var relayRepo relayout.Repository
-	if pool != nil {
-		relayRepo = relaypg.New(pool)
-		log.Info().Msg("relay repository: postgres")
-	} else {
-		relayRepo = relaymem.New()
-		log.Info().Msg("relay repository: memory")
+	if gdb == nil {
+		log.Fatal().Msg("relay requires postgres database")
 	}
+	relayRepo := relayrepo.New(gdb)
+	log.Info().Msg("relay repository: postgres")
 	relayService := relaysvc.New(relayRepo)
 	relayHandler := relayhttp.New(relayService)
+	hypeMapHandler := relayhttp.NewHypeMapHandler(relayService)
 
 	// SIGNAL
-	var signalRepo signalout.Repository
-	if pool != nil {
-		signalRepo = signalpg.New(pool)
-		log.Info().Msg("signal repository: postgres")
-	} else {
-		signalRepo = signalmem.New()
-		log.Info().Msg("signal repository: memory")
+	if gdb == nil {
+		log.Fatal().Msg("signal requires postgres database")
 	}
-	signalService := signalsvc.New(signalRepo)
-	signalHandler := signalhttp.New(signalService)
+	signalRepo := signalrepo.New(gdb)
+	log.Info().Msg("signal repository: postgres")
+	signalRouter := signalhttp.NewRouter(signalRepo)
 
-	// Router
+	// Router raíz
 	r := sharedhttp.NewRouter()
+	r.Use(middleware.Logger) // log de cada request
 
-	// Health (documentado)
+	// 404 en JSON (para que jq no muera con "404" texto)
+	r.NotFound(func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "application/json; charset=utf-8")
+		w.WriteHeader(http.StatusNotFound)
+		_, _ = w.Write([]byte(`{"error":"not_found","where":"root"}`))
+	})
+
+	// Health raíz
 	// @Summary Healthcheck
 	// @Success 200 {string} string "ok"
 	// @Router /healthz [get]
@@ -95,19 +94,27 @@ func main() {
 	// Swagger UI + alias /openapi.json
 	mountSwagger(r)
 
-	// API
-	r.Route("/v1", func(v chi.Router) {
-		relayHandler.Register(v)
-		signalHandler.Register(v)
-		if pool != nil {
-			v.Route("/ingest", func(ix chi.Router) {
-				ix.Use(sharedhttp.ApiKeyMiddleware)
-				relayIngest := relayhttp.NewIngest(pool)
-				signalIngest := signalhttp.NewIngest(pool)
-				ix.Route("/relay", relayIngest.Register)
-				ix.Route("/signal", signalIngest.Register)
-			})
-		}
+	// API v1
+	v1 := chi.NewRouter()
+	relayHandler.Register(v1)
+	hypeMapHandler.Register(v1)
+
+	// ⬇️ Prefijo final: /v1/signal/...
+	v1.Mount("/signal", signalRouter)
+
+	// Health duplicado en el v1 para validar prefijo
+	v1.Get("/signal/riot/_health", func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"ok":true,"where":"v1-direct"}`))
+	})
+
+	// Montar /v1 en el router raíz
+	r.Mount("/v1", v1)
+
+	// DUMP del router raíz (paths COMPLETOS)
+	_ = chi.Walk(r, func(method, route string, _ http.Handler, _ ...func(http.Handler) http.Handler) error {
+		fmt.Println("[ROOT]", method, route)
+		return nil
 	})
 
 	log.Info().Str("port", port).Msg("api up")

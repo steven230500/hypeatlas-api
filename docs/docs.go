@@ -60,12 +60,6 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/modules_relay_infra_http.HypeMapLiveResp"
                         }
-                    },
-                    "500": {
-                        "description": "db error",
-                        "schema": {
-                            "type": "string"
-                        }
                     }
                 }
             }
@@ -114,12 +108,6 @@ const docTemplate = `{
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/modules_relay_infra_http.HypeMapSummaryResp"
-                        }
-                    },
-                    "500": {
-                        "description": "db error",
-                        "schema": {
-                            "type": "string"
                         }
                     }
                 }
@@ -485,16 +473,25 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "github_com_steven230500_hypeatlas-api_modules_relay_domain_entities.CoStream": {
+        "github_com_steven230500_hypeatlas-api_domain_entities.CoStream": {
             "type": "object",
             "properties": {
                 "country": {
                     "type": "string"
                 },
-                "event_id": {
+                "created_at": {
                     "type": "string"
                 },
-                "id": {
+                "creator": {
+                    "$ref": "#/definitions/github_com_steven230500_hypeatlas-api_domain_entities.Creator"
+                },
+                "creator_uuid": {
+                    "type": "string"
+                },
+                "event": {
+                    "$ref": "#/definitions/github_com_steven230500_hypeatlas-api_domain_entities.Event"
+                },
+                "event_uuid": {
                     "type": "string"
                 },
                 "is_live": {
@@ -503,11 +500,20 @@ const docTemplate = `{
                 "lang": {
                     "type": "string"
                 },
+                "last_seen_at": {
+                    "type": "string"
+                },
                 "platform": {
                     "description": "twitch|youtube",
                     "type": "string"
                 },
+                "updated_at": {
+                    "type": "string"
+                },
                 "url": {
+                    "type": "string"
+                },
+                "uuid": {
                     "type": "string"
                 },
                 "verified": {
@@ -518,7 +524,119 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_steven230500_hypeatlas-api_modules_relay_infra_repository_postgres.HypeMapItem": {
+        "github_com_steven230500_hypeatlas-api_domain_entities.Comp": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "delta_win": {
+                    "type": "number"
+                },
+                "game": {
+                    "type": "string"
+                },
+                "league": {
+                    "type": "string"
+                },
+                "map": {
+                    "type": "string"
+                },
+                "patch": {
+                    "type": "string"
+                },
+                "pick_rate": {
+                    "type": "number"
+                },
+                "region": {
+                    "type": "string"
+                },
+                "side": {
+                    "type": "string"
+                },
+                "slots": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "updated_at": {
+                    "type": "string"
+                },
+                "uuid": {
+                    "type": "string"
+                },
+                "win_rate": {
+                    "type": "number"
+                }
+            }
+        },
+        "github_com_steven230500_hypeatlas-api_domain_entities.Creator": {
+            "type": "object",
+            "properties": {
+                "country": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "handle": {
+                    "type": "string"
+                },
+                "lang": {
+                    "type": "string"
+                },
+                "platform": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                },
+                "url": {
+                    "type": "string"
+                },
+                "uuid": {
+                    "type": "string"
+                },
+                "verified": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "github_com_steven230500_hypeatlas-api_domain_entities.Event": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "ends_at": {
+                    "type": "string"
+                },
+                "game": {
+                    "description": "val|lol",
+                    "type": "string"
+                },
+                "league": {
+                    "type": "string"
+                },
+                "slug": {
+                    "type": "string"
+                },
+                "starts_at": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                },
+                "uuid": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_steven230500_hypeatlas-api_domain_entities.HypeMapItem": {
             "type": "object",
             "properties": {
                 "country": {
@@ -556,7 +674,7 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_steven230500_hypeatlas-api_modules_relay_infra_repository_postgres.HypeMapSummaryItem": {
+        "github_com_steven230500_hypeatlas-api_domain_entities.HypeMapSummaryItem": {
             "type": "object",
             "properties": {
                 "event_slug": {
@@ -582,79 +700,13 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_steven230500_hypeatlas-api_modules_signal_domain_entities.Change": {
+        "github_com_steven230500_hypeatlas-api_domain_entities.League": {
             "type": "object",
             "properties": {
-                "entity_id": {
+                "created_at": {
                     "type": "string"
-                },
-                "entity_type": {
-                    "description": "champion|agent|item|weapon|map",
-                    "type": "string"
-                },
-                "field": {
-                    "type": "string"
-                },
-                "impact_score": {
-                    "type": "number"
-                },
-                "new": {
-                    "type": "string"
-                },
-                "old": {
-                    "type": "string"
-                },
-                "patch_id": {
-                    "type": "string"
-                }
-            }
-        },
-        "github_com_steven230500_hypeatlas-api_modules_signal_domain_entities.Comp": {
-            "type": "object",
-            "properties": {
-                "delta_win": {
-                    "type": "number"
                 },
                 "game": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "string"
-                },
-                "league": {
-                    "type": "string"
-                },
-                "map": {
-                    "type": "string"
-                },
-                "patch": {
-                    "type": "string"
-                },
-                "pick_rate": {
-                    "type": "number"
-                },
-                "region": {
-                    "type": "string"
-                },
-                "side": {
-                    "type": "string"
-                },
-                "slots": {
-                    "description": "raw JSON (permitimos estructura libre)",
-                    "type": "string"
-                },
-                "win_rate": {
-                    "type": "number"
-                }
-            }
-        },
-        "github_com_steven230500_hypeatlas-api_modules_signal_domain_entities.League": {
-            "type": "object",
-            "properties": {
-                "game": {
-                    "type": "string"
-                },
-                "id": {
                     "type": "string"
                 },
                 "name": {
@@ -665,23 +717,77 @@ const docTemplate = `{
                 },
                 "slug": {
                     "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                },
+                "uuid": {
+                    "type": "string"
                 }
             }
         },
-        "github_com_steven230500_hypeatlas-api_modules_signal_domain_entities.Patch": {
+        "github_com_steven230500_hypeatlas-api_domain_entities.Patch": {
             "type": "object",
             "properties": {
-                "game": {
-                    "description": "\"lol\" | \"val\"",
+                "changes": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_steven230500_hypeatlas-api_domain_entities.PatchChange"
+                    }
+                },
+                "created_at": {
                     "type": "string"
                 },
-                "id": {
+                "game": {
+                    "description": "val|lol",
                     "type": "string"
                 },
                 "released_at": {
                     "type": "string"
                 },
+                "updated_at": {
+                    "type": "string"
+                },
+                "uuid": {
+                    "type": "string"
+                },
                 "version": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_steven230500_hypeatlas-api_domain_entities.PatchChange": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "entity_id": {
+                    "type": "string"
+                },
+                "entity_type": {
+                    "description": "champion|agent|item|weapon|map",
+                    "type": "string"
+                },
+                "field": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "impact_score": {
+                    "type": "number"
+                },
+                "new": {
+                    "type": "string"
+                },
+                "old": {
+                    "type": "string"
+                },
+                "patch_uuid": {
+                    "type": "string"
+                },
+                "updated_at": {
                     "type": "string"
                 }
             }
@@ -692,7 +798,7 @@ const docTemplate = `{
                 "items": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/github_com_steven230500_hypeatlas-api_modules_relay_domain_entities.CoStream"
+                        "$ref": "#/definitions/github_com_steven230500_hypeatlas-api_domain_entities.CoStream"
                     }
                 }
             }
@@ -703,7 +809,7 @@ const docTemplate = `{
                 "items": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/github_com_steven230500_hypeatlas-api_modules_relay_infra_repository_postgres.HypeMapItem"
+                        "$ref": "#/definitions/github_com_steven230500_hypeatlas-api_domain_entities.HypeMapItem"
                     }
                 },
                 "next_offset": {
@@ -717,7 +823,7 @@ const docTemplate = `{
                 "items": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/github_com_steven230500_hypeatlas-api_modules_relay_infra_repository_postgres.HypeMapSummaryItem"
+                        "$ref": "#/definitions/github_com_steven230500_hypeatlas-api_domain_entities.HypeMapSummaryItem"
                     }
                 },
                 "next_offset": {
@@ -738,7 +844,6 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "game": {
-                    "description": "\"val\"|\"lol\"",
                     "type": "string"
                 },
                 "handle": {
@@ -751,11 +856,10 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "league": {
-                    "description": "opcional",
                     "type": "string"
                 },
                 "platform": {
-                    "description": "\"twitch\"|\"youtube\"",
+                    "description": "twitch|youtube",
                     "type": "string"
                 },
                 "starts_at": {
@@ -778,7 +882,7 @@ const docTemplate = `{
                 "items": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/github_com_steven230500_hypeatlas-api_modules_signal_domain_entities.Change"
+                        "$ref": "#/definitions/github_com_steven230500_hypeatlas-api_domain_entities.PatchChange"
                     }
                 }
             }
@@ -789,7 +893,7 @@ const docTemplate = `{
                 "items": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/github_com_steven230500_hypeatlas-api_modules_signal_domain_entities.Comp"
+                        "$ref": "#/definitions/github_com_steven230500_hypeatlas-api_domain_entities.Comp"
                     }
                 }
             }
@@ -800,7 +904,7 @@ const docTemplate = `{
                 "items": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/github_com_steven230500_hypeatlas-api_modules_signal_domain_entities.League"
+                        "$ref": "#/definitions/github_com_steven230500_hypeatlas-api_domain_entities.League"
                     }
                 }
             }
@@ -811,7 +915,7 @@ const docTemplate = `{
                 "items": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/github_com_steven230500_hypeatlas-api_modules_signal_domain_entities.Patch"
+                        "$ref": "#/definitions/github_com_steven230500_hypeatlas-api_domain_entities.Patch"
                     }
                 }
             }

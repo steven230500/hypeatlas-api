@@ -5,7 +5,8 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/steven230500/hypeatlas-api/modules/relay/domain/entities"
+
+	"github.com/steven230500/hypeatlas-api/domain/entities"
 	in "github.com/steven230500/hypeatlas-api/modules/relay/domain/ports/in"
 )
 
@@ -19,7 +20,7 @@ func (h *Handler) Register(r chi.Router) {
 	})
 }
 
-// ====== Swagger response wrappers ======
+// ---- Swagger response wrapper
 type CoStreamsResp struct {
 	Items []entities.CoStream `json:"items"`
 }
@@ -34,9 +35,13 @@ type CoStreamsResp struct {
 // @Failure      400 {string} string "event_id required"
 // @Router       /v1/relay/costreams [get]
 func (h *Handler) list(w http.ResponseWriter, r *http.Request) {
-	eventID := r.URL.Query().Get("event_id")
-	lang := r.URL.Query().Get("lang")
-	items, err := h.svc.ListLiveCoStreams(r.Context(), eventID, lang)
+	q := r.URL.Query()
+	eventID := q.Get("event_id")
+	if eventID == "" {
+		http.Error(w, "event_id required", http.StatusBadRequest)
+		return
+	}
+	items, err := h.svc.ListLiveCoStreams(r.Context(), eventID, q.Get("lang"))
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return

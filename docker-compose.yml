@@ -10,5 +10,24 @@ services:
       - "5433:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: hypeatlas-api
+    environment:
+      PORT: 8080
+      STORAGE: postgres
+      POSTGRES_URL: postgres://postgres:postgres@db:5432/hypeatlas_dev?sslmode=disable
+      CORS_ALLOWED_ORIGINS: http://localhost:3000,https://hypeatlas.app
+      API_KEYS: dev-secret-123
+      RIOT_API_KEY: ${RIOT_API_KEY}
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
+    restart: unless-stopped
+
 volumes:
   pgdata:

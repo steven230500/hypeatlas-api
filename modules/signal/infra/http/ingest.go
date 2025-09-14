@@ -5,15 +5,15 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/jackc/pgx/v5/pgxpool"
-	signalpg "github.com/steven230500/hypeatlas-api/modules/signal/infra/repository/postgres"
+	signalrepo "github.com/steven230500/hypeatlas-api/modules/signal/infra/repository"
+	"gorm.io/gorm"
 )
 
 type IngestHandler struct {
-	pool *pgxpool.Pool
+	db *gorm.DB
 }
 
-func NewIngest(pool *pgxpool.Pool) *IngestHandler { return &IngestHandler{pool: pool} }
+func NewIngest(db *gorm.DB) *IngestHandler { return &IngestHandler{db: db} }
 
 func (h *IngestHandler) Register(r chi.Router) {
 	r.Post("/comps:upsert", h.upsertComp)
@@ -49,13 +49,18 @@ func (h *IngestHandler) upsertComp(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	raw, _ := json.Marshal(req.Slots)
-	repo := signalpg.NewRaw(h.pool)
-	if err := repo.UpsertComp(
-		r.Context(),
-		req.Game, req.Region, req.League, req.Patch, req.Map, req.Side,
-		string(raw), req.Pick, req.Win, req.Delta,
-	); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+	repo := signalrepo.New(h.db)
+	if pgRepo, ok := repo.(*signalrepo.Repo); ok {
+		if err := pgRepo.UpsertComp(
+			r.Context(),
+			req.Game, req.Region, req.League, req.Patch, req.Map, req.Side,
+			string(raw), req.Pick, req.Win, req.Delta,
+		); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+	} else {
+		http.Error(w, "invalid repo type", http.StatusInternalServerError)
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)
