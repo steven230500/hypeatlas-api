@@ -38,6 +38,14 @@ type SyncPatchesResponse struct {
 	Version string `json:"version,omitempty"`
 }
 
+// @Summary Synchronize game patches from Riot Games
+// @Description Sync latest patch information from Riot Games Data Dragon API
+// @Tags riot
+// @Accept json
+// @Produce json
+// @Success 200 {object} SyncPatchesResponse "Synchronization result"
+// @Failure 500 {string} string "Internal server error"
+// @Router /v1/signal/riot/sync/patches [post]
 func (h *RiotHandler) syncPatches(w http.ResponseWriter, r *http.Request) {
 	if err := h.riotSvc.SyncPatches(r.Context()); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -47,6 +55,16 @@ func (h *RiotHandler) syncPatches(w http.ResponseWriter, r *http.Request) {
 	_ = json.NewEncoder(w).Encode(SyncPatchesResponse{Success: true, Message: "Patches synchronized successfully"})
 }
 
+// @Summary Analyze weekly champion rotation
+// @Description Get detailed analysis of free champion rotation including tier classification, pick rates, and strategic recommendations
+// @Tags riot
+// @Accept json
+// @Produce json
+// @Param platform path string true "Platform (e.g., na1, euw1, kr)"
+// @Success 200 {object} map[string]interface{} "Analysis result with champion data and recommendations"
+// @Failure 400 {string} string "Platform parameter is required"
+// @Failure 500 {string} string "Internal server error"
+// @Router /v1/signal/riot/metagame/rotation/{platform} [get]
 func (h *RiotHandler) analyzeChampionRotation(w http.ResponseWriter, r *http.Request) {
 	platform := chi.URLParam(r, "platform")
 	if platform == "" {
@@ -62,6 +80,17 @@ func (h *RiotHandler) analyzeChampionRotation(w http.ResponseWriter, r *http.Req
 	_ = json.NewEncoder(w).Encode(map[string]any{"success": true, "platform": platform, "analysis": analysis})
 }
 
+// @Summary Analyze league rankings and statistics
+// @Description Get detailed analysis of Challenger league including win rates, LP distribution, and player statistics
+// @Tags riot
+// @Accept json
+// @Produce json
+// @Param platform path string true "Platform (e.g., na1, euw1, kr)"
+// @Param queue path string true "Queue type (e.g., RANKED_SOLO_5x5, RANKED_FLEX_SR)"
+// @Success 200 {object} map[string]interface{} "League analysis with statistics and rankings"
+// @Failure 400 {string} string "Platform and queue parameters are required"
+// @Failure 500 {string} string "Internal server error"
+// @Router /v1/signal/riot/metagame/league/{platform}/{queue} [get]
 func (h *RiotHandler) analyzeLeagueRankings(w http.ResponseWriter, r *http.Request) {
 	platform := chi.URLParam(r, "platform")
 	queue := chi.URLParam(r, "queue")
@@ -78,6 +107,16 @@ func (h *RiotHandler) analyzeLeagueRankings(w http.ResponseWriter, r *http.Reque
 	_ = json.NewEncoder(w).Encode(map[string]any{"success": true, "platform": platform, "queue": queue, "analysis": analysis})
 }
 
+// @Summary Generate comprehensive meta-game report
+// @Description Get complete meta-game analysis combining champion rotation and league statistics with insights and recommendations
+// @Tags riot
+// @Accept json
+// @Produce json
+// @Param platform path string true "Platform (e.g., na1, euw1, kr)"
+// @Success 200 {object} map[string]interface{} "Complete meta-game report with analysis and insights"
+// @Failure 400 {string} string "Platform parameter is required"
+// @Failure 500 {string} string "Internal server error"
+// @Router /v1/signal/riot/metagame/report/{platform} [get]
 func (h *RiotHandler) generateMetaReport(w http.ResponseWriter, r *http.Request) {
 	platform := chi.URLParam(r, "platform")
 	if platform == "" {
@@ -98,6 +137,16 @@ type PatchInfoResponse struct {
 	Patch   *entities.Patch `json:"patch,omitempty"`
 }
 
+// @Summary Get detailed patch information
+// @Description Retrieve detailed information about a specific game patch
+// @Tags riot
+// @Accept json
+// @Produce json
+// @Param version path string true "Patch version (e.g., 13.24.1)"
+// @Success 200 {object} PatchInfoResponse "Patch information"
+// @Failure 400 {string} string "Version parameter is required"
+// @Failure 404 {string} string "Patch not found"
+// @Router /v1/signal/riot/patches/{version} [get]
 func (h *RiotHandler) getPatchInfo(w http.ResponseWriter, r *http.Request) {
 	version := chi.URLParam(r, "version")
 	if version == "" {

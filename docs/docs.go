@@ -470,6 +470,221 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/v1/signal/riot/metagame/league/{platform}/{queue}": {
+            "get": {
+                "description": "Get detailed analysis of Challenger league including win rates, LP distribution, and player statistics",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "riot"
+                ],
+                "summary": "Analyze league rankings and statistics",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Platform (e.g., na1, euw1, kr)",
+                        "name": "platform",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Queue type (e.g., RANKED_SOLO_5x5, RANKED_FLEX_SR)",
+                        "name": "queue",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "League analysis with statistics and rankings",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Platform and queue parameters are required",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/signal/riot/metagame/report/{platform}": {
+            "get": {
+                "description": "Get complete meta-game analysis combining champion rotation and league statistics with insights and recommendations",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "riot"
+                ],
+                "summary": "Generate comprehensive meta-game report",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Platform (e.g., na1, euw1, kr)",
+                        "name": "platform",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Complete meta-game report with analysis and insights",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Platform parameter is required",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/signal/riot/metagame/rotation/{platform}": {
+            "get": {
+                "description": "Get detailed analysis of free champion rotation including tier classification, pick rates, and strategic recommendations",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "riot"
+                ],
+                "summary": "Analyze weekly champion rotation",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Platform (e.g., na1, euw1, kr)",
+                        "name": "platform",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Analysis result with champion data and recommendations",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Platform parameter is required",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/signal/riot/patches/{version}": {
+            "get": {
+                "description": "Retrieve detailed information about a specific game patch",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "riot"
+                ],
+                "summary": "Get detailed patch information",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Patch version (e.g., 13.24.1)",
+                        "name": "version",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Patch information",
+                        "schema": {
+                            "$ref": "#/definitions/modules_signal_infra_http.PatchInfoResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Version parameter is required",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Patch not found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/signal/riot/sync/patches": {
+            "post": {
+                "description": "Sync latest patch information from Riot Games Data Dragon API",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "riot"
+                ],
+                "summary": "Synchronize game patches from Riot Games",
+                "responses": {
+                    "200": {
+                        "description": "Synchronization result",
+                        "schema": {
+                            "$ref": "#/definitions/modules_signal_infra_http.SyncPatchesResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -667,7 +882,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "score": {
-                    "type": "number"
+                    "type": "integer"
                 },
                 "viewers": {
                     "type": "integer"
@@ -909,6 +1124,17 @@ const docTemplate = `{
                 }
             }
         },
+        "modules_signal_infra_http.PatchInfoResponse": {
+            "type": "object",
+            "properties": {
+                "patch": {
+                    "$ref": "#/definitions/github_com_steven230500_hypeatlas-api_domain_entities.Patch"
+                },
+                "success": {
+                    "type": "boolean"
+                }
+            }
+        },
         "modules_signal_infra_http.PatchesResp": {
             "type": "object",
             "properties": {
@@ -917,6 +1143,20 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/github_com_steven230500_hypeatlas-api_domain_entities.Patch"
                     }
+                }
+            }
+        },
+        "modules_signal_infra_http.SyncPatchesResponse": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
+                },
+                "success": {
+                    "type": "boolean"
+                },
+                "version": {
+                    "type": "string"
                 }
             }
         },

@@ -129,7 +129,7 @@ definitions:
       platform:
         type: string
       score:
-        type: number
+        type: integer
       viewers:
         type: integer
     type: object
@@ -287,12 +287,28 @@ definitions:
           $ref: '#/definitions/github_com_steven230500_hypeatlas-api_domain_entities.League'
         type: array
     type: object
+  modules_signal_infra_http.PatchInfoResponse:
+    properties:
+      patch:
+        $ref: '#/definitions/github_com_steven230500_hypeatlas-api_domain_entities.Patch'
+      success:
+        type: boolean
+    type: object
   modules_signal_infra_http.PatchesResp:
     properties:
       items:
         items:
           $ref: '#/definitions/github_com_steven230500_hypeatlas-api_domain_entities.Patch'
         type: array
+    type: object
+  modules_signal_infra_http.SyncPatchesResponse:
+    properties:
+      message:
+        type: string
+      success:
+        type: boolean
+      version:
+        type: string
     type: object
   modules_signal_infra_http.upsertCompReq:
     properties:
@@ -628,6 +644,152 @@ paths:
       summary: Listar parches por juego
       tags:
       - signal
+  /v1/signal/riot/metagame/league/{platform}/{queue}:
+    get:
+      consumes:
+      - application/json
+      description: Get detailed analysis of Challenger league including win rates,
+        LP distribution, and player statistics
+      parameters:
+      - description: Platform (e.g., na1, euw1, kr)
+        in: path
+        name: platform
+        required: true
+        type: string
+      - description: Queue type (e.g., RANKED_SOLO_5x5, RANKED_FLEX_SR)
+        in: path
+        name: queue
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: League analysis with statistics and rankings
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Platform and queue parameters are required
+          schema:
+            type: string
+        "500":
+          description: Internal server error
+          schema:
+            type: string
+      summary: Analyze league rankings and statistics
+      tags:
+      - riot
+  /v1/signal/riot/metagame/report/{platform}:
+    get:
+      consumes:
+      - application/json
+      description: Get complete meta-game analysis combining champion rotation and
+        league statistics with insights and recommendations
+      parameters:
+      - description: Platform (e.g., na1, euw1, kr)
+        in: path
+        name: platform
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Complete meta-game report with analysis and insights
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Platform parameter is required
+          schema:
+            type: string
+        "500":
+          description: Internal server error
+          schema:
+            type: string
+      summary: Generate comprehensive meta-game report
+      tags:
+      - riot
+  /v1/signal/riot/metagame/rotation/{platform}:
+    get:
+      consumes:
+      - application/json
+      description: Get detailed analysis of free champion rotation including tier
+        classification, pick rates, and strategic recommendations
+      parameters:
+      - description: Platform (e.g., na1, euw1, kr)
+        in: path
+        name: platform
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Analysis result with champion data and recommendations
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Platform parameter is required
+          schema:
+            type: string
+        "500":
+          description: Internal server error
+          schema:
+            type: string
+      summary: Analyze weekly champion rotation
+      tags:
+      - riot
+  /v1/signal/riot/patches/{version}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve detailed information about a specific game patch
+      parameters:
+      - description: Patch version (e.g., 13.24.1)
+        in: path
+        name: version
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Patch information
+          schema:
+            $ref: '#/definitions/modules_signal_infra_http.PatchInfoResponse'
+        "400":
+          description: Version parameter is required
+          schema:
+            type: string
+        "404":
+          description: Patch not found
+          schema:
+            type: string
+      summary: Get detailed patch information
+      tags:
+      - riot
+  /v1/signal/riot/sync/patches:
+    post:
+      consumes:
+      - application/json
+      description: Sync latest patch information from Riot Games Data Dragon API
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Synchronization result
+          schema:
+            $ref: '#/definitions/modules_signal_infra_http.SyncPatchesResponse'
+        "500":
+          description: Internal server error
+          schema:
+            type: string
+      summary: Synchronize game patches from Riot Games
+      tags:
+      - riot
 schemes:
 - https
 - http
