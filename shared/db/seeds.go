@@ -168,6 +168,128 @@ func RunSeeds(g *gorm.DB) error {
 			FirstOrCreate(&entities.EventRule{}).Error
 	}
 
+	// --- Professional Leagues Seeds
+	professionalLeagues := []entities.ProfessionalLeague{
+		{
+			Code:        "LEC",
+			Name:        "League of Legends European Championship",
+			Region:      "Europe",
+			Platform:    "EUW1",
+			Seasons:     `["Spring", "Summer"]`,
+			Teams:       10,
+			Description: "La liga europea más prestigiosa de League of Legends",
+			IsActive:    true,
+		},
+		{
+			Code:        "LCK",
+			Name:        "League of Legends Champions Korea",
+			Region:      "Korea",
+			Platform:    "KR",
+			Seasons:     `["Spring", "Summer"]`,
+			Teams:       10,
+			Description: "La liga coreana, considerada la más competitiva del mundo",
+			IsActive:    true,
+		},
+		{
+			Code:        "LPL",
+			Name:        "League of Legends Pro League",
+			Region:      "China",
+			Platform:    "CN1",
+			Seasons:     `["Spring", "Summer"]`,
+			Teams:       17,
+			Description: "La liga china con el mayor número de equipos",
+			IsActive:    true,
+		},
+		{
+			Code:        "LTA",
+			Name:        "Liga Latinoamérica",
+			Region:      "Latin America",
+			Platform:    "LA1/LA2",
+			Seasons:     `["Opening", "Closing"]`,
+			Teams:       8,
+			Description: "La liga latinoamericana de League of Legends",
+			IsActive:    true,
+		},
+		{
+			Code:        "LCS",
+			Name:        "League Championship Series",
+			Region:      "North America",
+			Platform:    "NA1",
+			Seasons:     `["Spring", "Summer"]`,
+			Teams:       10,
+			Description: "La liga norteamericana de League of Legends",
+			IsActive:    true,
+		},
+		{
+			Code:        "VCS",
+			Name:        "Vietnam Championship Series",
+			Region:      "Vietnam",
+			Platform:    "VN2",
+			Seasons:     `["Spring", "Summer"]`,
+			Teams:       8,
+			Description: "La liga vietnamita de League of Legends",
+			IsActive:    true,
+		},
+		{
+			Code:        "PCS",
+			Name:        "Pacific Championship Series",
+			Region:      "Pacific",
+			Platform:    "TW2/SG2/PH2",
+			Seasons:     `["Spring", "Summer"]`,
+			Teams:       8,
+			Description: "La liga del Pacífico Asiático",
+			IsActive:    true,
+		},
+	}
+
+	for _, league := range professionalLeagues {
+		_ = g.Where("code = ?", league.Code).
+			Attrs(league).FirstOrCreate(&entities.ProfessionalLeague{}).Error
+	}
+
+	// --- League Champion Stats Seeds (LEC Example)
+	lecChampions := []entities.LeagueChampionStats{
+		{
+			LeagueCode:    "LEC",
+			ChampionName:  "Yuumi",
+			PickRate:      15.2,
+			WinRate:       52.1,
+			BanRate:       8.5,
+			Position:      "Support",
+			Season:        "Summer 2024",
+			GamesAnalyzed: 1250,
+			LastUpdated:   time.Now().UTC(),
+		},
+		{
+			LeagueCode:    "LEC",
+			ChampionName:  "Jax",
+			PickRate:      12.8,
+			WinRate:       48.9,
+			BanRate:       25.3,
+			Position:      "Top",
+			Season:        "Summer 2024",
+			GamesAnalyzed: 1250,
+			LastUpdated:   time.Now().UTC(),
+		},
+		{
+			LeagueCode:    "LEC",
+			ChampionName:  "Ahri",
+			PickRate:      11.5,
+			WinRate:       51.2,
+			BanRate:       12.1,
+			Position:      "Mid",
+			Season:        "Summer 2024",
+			GamesAnalyzed: 1250,
+			LastUpdated:   time.Now().UTC(),
+		},
+	}
+
+	for _, champ := range lecChampions {
+		_ = g.Where("league_code = ? AND champion_name = ? AND season = ?",
+			champ.LeagueCode, champ.ChampionName, champ.Season).
+			Attrs(champ).FirstOrCreate(&entities.LeagueChampionStats{}).Error
+	}
+
 	return nil
 }
 

@@ -187,3 +187,54 @@ func (s *Service) GetProfessionalLeagues(ctx context.Context) (map[string]interf
 func (s *Service) GetLeagueChampions(ctx context.Context, league string) (map[string]interface{}, error) {
 	return s.client.GetLeagueChampions(league)
 }
+
+// ProfessionalLeagueService maneja la lógica de ligas profesionales
+type ProfessionalLeagueService struct {
+	client *Client
+}
+
+// NewProfessionalLeagueService crea un nuevo servicio de ligas profesionales
+func NewProfessionalLeagueService(client *Client) *ProfessionalLeagueService {
+	return &ProfessionalLeagueService{client: client}
+}
+
+// GetProfessionalLeagues obtiene información completa de ligas profesionales
+func (s *ProfessionalLeagueService) GetProfessionalLeagues() (map[string]interface{}, error) {
+	return s.client.GetProfessionalLeagues()
+}
+
+// GetLeagueChampions obtiene estadísticas detalladas de una liga específica
+func (s *ProfessionalLeagueService) GetLeagueChampions(league string) (map[string]interface{}, error) {
+	// Validar liga
+	validLeagues := map[string]bool{
+		"LEC": true, "LCK": true, "LPL": true, "LTA": true,
+		"LCS": true, "VCS": true, "PCS": true,
+	}
+
+	if !validLeagues[league] {
+		return nil, fmt.Errorf("invalid league: %s", league)
+	}
+
+	// Obtener datos básicos
+	stats, err := s.client.GetLeagueChampions(league)
+	if err != nil {
+		return nil, err
+	}
+
+	// Enriquecer con datos adicionales
+	stats["analysis_date"] = time.Now().UTC().Format(time.RFC3339)
+	stats["data_source"] = "Riot Games API + Community Analysis"
+
+	return stats, nil
+}
+
+// ValidateLeague valida si una liga existe
+func (s *ProfessionalLeagueService) ValidateLeague(league string) bool {
+	validLeagues := []string{"LEC", "LCK", "LPL", "LTA", "LCS", "VCS", "PCS"}
+	for _, valid := range validLeagues {
+		if valid == league {
+			return true
+		}
+	}
+	return false
+}

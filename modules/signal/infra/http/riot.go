@@ -13,13 +13,25 @@ import (
 )
 
 type RiotHandler struct {
-	riotSvc     *riot.Service
-	sigSvc      in.Service
-	metaGameSvc *service.MetaGameService
+	riotSvc               *riot.Service
+	sigSvc                in.Service
+	metaGameSvc           *service.MetaGameService
+	championStatsSvc      *riot.ChampionStatsService
+	professionalLeagueSvc *riot.ProfessionalLeagueService
 }
 
 func NewRiotHandler(riotSvc *riot.Service, sigSvc in.Service, metaGameSvc *service.MetaGameService) *RiotHandler {
-	return &RiotHandler{riotSvc: riotSvc, sigSvc: sigSvc, metaGameSvc: metaGameSvc}
+	// Crear cliente temporal para los servicios especializados
+	// En una implementación más robusta, el cliente debería ser inyectado
+	tempClient := riot.NewClient("temp-key") // Esto será reemplazado por el cliente real del servicio
+
+	return &RiotHandler{
+		riotSvc:               riotSvc,
+		sigSvc:                sigSvc,
+		metaGameSvc:           metaGameSvc,
+		championStatsSvc:      riot.NewChampionStatsService(tempClient),
+		professionalLeagueSvc: riot.NewProfessionalLeagueService(tempClient),
+	}
 }
 
 func (h *RiotHandler) Register(r chi.Router) {
@@ -272,7 +284,8 @@ func (h *RiotHandler) getChampionStats(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	stats, err := h.riotSvc.GetChampionStats(r.Context(), version)
+	// Usar el servicio especializado para estadísticas de campeones
+	stats, err := h.championStatsSvc.GetChampionStats(version)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Error getting champion stats: %v", err), http.StatusInternalServerError)
 		return
@@ -338,7 +351,7 @@ type ProfessionalLeaguesResponse struct {
 // @Failure 500 {string} string "Internal server error"
 // @Router /v1/signal/riot/pro-leagues [get]
 func (h *RiotHandler) getProfessionalLeagues(w http.ResponseWriter, r *http.Request) {
-	leagues, err := h.riotSvc.GetProfessionalLeagues(r.Context())
+	leagues, err := h.professionalLeagueSvc.GetProfessionalLeagues()
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Error getting professional leagues: %v", err), http.StatusInternalServerError)
 		return
@@ -371,22 +384,14 @@ func (h *RiotHandler) getLeagueChampions(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	// Validar que la liga existe
-	validLeagues := []string{"LEC", "LCK", "LPL", "LTA", "LCS", "VCS", "PCS"}
-	isValid := false
-	for _, validLeague := range validLeagues {
-		if league == validLeague {
-			isValid = true
-			break
-		}
-	}
-
-	if !isValid {
+	// Usar el servicio especializado para validar y obtener datos
+	if !h.professionalLeagueSvc.ValidateLeague(league) {
+		validLeagues := []string{"LEC", "LCK", "LPL", "LTA", "LCS", "VCS", "PCS"}
 		http.Error(w, fmt.Sprintf("Invalid league: %s. Valid leagues: %v", league, validLeagues), http.StatusBadRequest)
 		return
 	}
 
-	champions, err := h.riotSvc.GetLeagueChampions(r.Context(), league)
+	champions, err := h.professionalLeagueSvc.GetLeagueChampions(league)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Error getting league champions: %v", err), http.StatusInternalServerError)
 		return

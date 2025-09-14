@@ -42,6 +42,9 @@ func Migrate(g *gorm.DB) {
 		&entities.LeagueRanking{},
 		&entities.ChampionMasteryStats{},
 		&entities.MetaGameAnalysis{},
+		// Professional leagues
+		&entities.ProfessionalLeague{},
+		&entities.LeagueChampionStats{},
 	); err != nil {
 		log.Fatalf("auto-migrate failed: %v", err)
 	}

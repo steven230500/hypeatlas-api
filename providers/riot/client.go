@@ -572,35 +572,38 @@ func (c *Client) GetRegions() ([]string, error) {
 	return regions, nil
 }
 
-// GetChampionStats obtiene estadísticas de uso de campeones desde Data Dragon
-func (c *Client) GetChampionStats(version string) (map[string]interface{}, error) {
-	// Obtener datos de campeones desde Data Dragon
-	champions, err := c.GetChampions(version)
+// ChampionStatsService maneja la lógica de estadísticas de campeones
+type ChampionStatsService struct {
+	client *Client
+}
+
+// NewChampionStatsService crea un nuevo servicio de estadísticas
+func NewChampionStatsService(client *Client) *ChampionStatsService {
+	return &ChampionStatsService{client: client}
+}
+
+// GetChampionStats obtiene estadísticas completas de campeones
+func (s *ChampionStatsService) GetChampionStats(version string) (map[string]interface{}, error) {
+	// Obtener datos básicos de campeones
+	champions, err := s.client.GetChampions(version)
 	if err != nil {
 		return nil, fmt.Errorf("error getting champions data: %w", err)
 	}
 
-	// Obtener rotación de campeones gratuita
-	rotation, err := c.GetChampionRotation("na1") // Usar NA1 como referencia
+	// Obtener rotación gratuita
+	rotation, err := s.getChampionRotation()
 	if err != nil {
-		// Log error but continue
+		// Log but continue
 		fmt.Printf("[RIOT-DEBUG] Error getting champion rotation: %v\n", err)
 	}
 
-	// Crear estadísticas básicas
+	// Construir respuesta estructurada
 	stats := map[string]interface{}{
-		"version":           version,
-		"total_champions":   len(champions.Data),
-		"free_champion_ids": []int{},
-		"champion_categories": map[string]int{
-			"assassin": 0,
-			"fighter":  0,
-			"mage":     0,
-			"marksman": 0,
-			"support":  0,
-			"tank":     0,
-		},
-		"top_champions": []map[string]interface{}{},
+		"version":       version,
+		"summary":       s.buildChampionSummary(champions),
+		"free_rotation": s.buildFreeRotationData(rotation),
+		"categories":    s.categorizeChampions(champions),
+		"top_champions": s.getTopChampions(champions, 5),
 		"available_endpoints": []string{
 			"champion-rotations",
 			"champion-mastery",
@@ -608,35 +611,85 @@ func (c *Client) GetChampionStats(version string) (map[string]interface{}, error
 		},
 	}
 
-	// Procesar rotación gratuita si está disponible
-	if rotation != nil {
-		stats["free_champion_ids"] = rotation.FreeChampionIDs
-		stats["free_champion_ids_new_players"] = rotation.FreeChampionIDsForNewPlayers
+	return stats, nil
+}
+
+// buildChampionSummary crea un resumen básico de campeones
+func (s *ChampionStatsService) buildChampionSummary(champions *ChampionsResponse) map[string]interface{} {
+	return map[string]interface{}{
+		"total_champions": len(champions.Data),
+		"last_updated":    time.Now().UTC().Format(time.RFC3339),
+	}
+}
+
+// getChampionRotation obtiene la rotación gratuita de forma segura
+func (s *ChampionStatsService) getChampionRotation() (*ChampionRotationResponse, error) {
+	return s.client.GetChampionRotation("na1")
+}
+
+// buildFreeRotationData construye los datos de rotación gratuita
+func (s *ChampionStatsService) buildFreeRotationData(rotation *ChampionRotationResponse) map[string]interface{} {
+	if rotation == nil {
+		return map[string]interface{}{
+			"available": false,
+			"note":      "Free rotation data not available",
+		}
 	}
 
-	// Procesar categorías de campeones
+	return map[string]interface{}{
+		"available":                     true,
+		"free_champion_ids":             rotation.FreeChampionIDs,
+		"free_champion_ids_new_players": rotation.FreeChampionIDsForNewPlayers,
+		"max_new_player_level":          rotation.MaxNewPlayerLevel,
+	}
+}
+
+// categorizeChampions clasifica campeones por roles (simplificado)
+func (s *ChampionStatsService) categorizeChampions(champions *ChampionsResponse) map[string]int {
+	categories := map[string]int{
+		"assassin": 0,
+		"fighter":  0,
+		"mage":     0,
+		"marksman": 0,
+		"support":  0,
+		"tank":     0,
+	}
+
+	// Por ahora clasificamos todos como fighter (lógica simplificada)
+	// En una implementación real, analizaríamos los tags de cada campeón
 	for range champions.Data {
-		// Aquí podríamos analizar tags del campeón para categorizarlos
-		// Por ahora solo contamos todos como fighter para tener un ejemplo
-		stats["champion_categories"].(map[string]int)["fighter"]++
+		categories["fighter"]++
 	}
 
-	// Obtener algunos campeones destacados (primeros 5)
+	return categories
+}
+
+// getTopChampions obtiene los primeros N campeones
+func (s *ChampionStatsService) getTopChampions(champions *ChampionsResponse, limit int) []map[string]interface{} {
+	var topChampions []map[string]interface{}
 	count := 0
+
 	for _, champion := range champions.Data {
-		if count >= 5 {
+		if count >= limit {
 			break
 		}
+
 		championInfo := map[string]interface{}{
 			"id":    champion.ID,
 			"name":  champion.Name,
 			"title": champion.Title,
 		}
-		stats["top_champions"] = append(stats["top_champions"].([]map[string]interface{}), championInfo)
+		topChampions = append(topChampions, championInfo)
 		count++
 	}
 
-	return stats, nil
+	return topChampions
+}
+
+// GetChampionStats mantiene compatibilidad hacia atrás
+func (c *Client) GetChampionStats(version string) (map[string]interface{}, error) {
+	service := NewChampionStatsService(c)
+	return service.GetChampionStats(version)
 }
 
 // GetPatchChanges obtiene cambios de campeones entre parches desde Data Dragon
