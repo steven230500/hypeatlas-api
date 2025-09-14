@@ -34,7 +34,7 @@ jobs:
 
             # esperar a que la aplicación esté lista (máx 60s)
             timeout 60s bash -c '
-              until curl -f http://127.0.0.1:8080/healthz >/dev/null 2>&1; do
+              until curl -f http://159.203.110.122:8080/healthz >/dev/null 2>&1; do
                 echo "Esperando a que la aplicación esté lista..."
                 sleep 3
               done
@@ -44,4 +44,4 @@ jobs:
             docker image prune -f || true
 
             # sanity final
-            curl -fsS http://127.0.0.1:8080/healthz
+            curl -fsS http://159.203.110.122:8080/healthz
