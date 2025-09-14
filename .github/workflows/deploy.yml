@@ -32,8 +32,16 @@ jobs:
             docker compose -f docker-compose.prod.yml pull
             docker compose -f docker-compose.prod.yml up -d
 
+            # esperar a que la aplicación esté lista (máx 60s)
+            timeout 60s bash -c '
+              until curl -f http://127.0.0.1:8080/healthz >/dev/null 2>&1; do
+                echo "Esperando a que la aplicación esté lista..."
+                sleep 3
+              done
+            '
+
             # limpieza ligera
             docker image prune -f || true
 
-            # sanity
+            # sanity final
             curl -fsS http://127.0.0.1:8080/healthz
