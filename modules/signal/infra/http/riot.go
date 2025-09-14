@@ -29,6 +29,8 @@ func (h *RiotHandler) Register(r chi.Router) {
 		r.Get("/metagame/rotation/{platform}", h.analyzeChampionRotation)
 		r.Get("/metagame/league/{platform}/{queue}", h.analyzeLeagueRankings)
 		r.Get("/metagame/report/{platform}", h.generateMetaReport)
+		r.Get("/games", h.getGames)
+		r.Get("/leagues/{platform}", h.getLeagues)
 	})
 }
 
@@ -160,4 +162,61 @@ func (h *RiotHandler) getPatchInfo(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set("Content-Type", "application/json")
 	_ = json.NewEncoder(w).Encode(PatchInfoResponse{Success: true, Patch: patch})
+}
+
+type GamesResponse struct {
+	Success bool     `json:"success"`
+	Games   []string `json:"games"`
+}
+
+// @Summary Get available Riot Games
+// @Description Retrieve list of all available games from Riot Games
+// @Tags riot
+// @Accept json
+// @Produce json
+// @Success 200 {object} GamesResponse "List of available games"
+// @Failure 500 {string} string "Internal server error"
+// @Router /v1/signal/riot/games [get]
+func (h *RiotHandler) getGames(w http.ResponseWriter, r *http.Request) {
+	games, err := h.riotSvc.GetGames(r.Context())
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Error getting games: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(w).Encode(GamesResponse{Success: true, Games: games})
+}
+
+type LeaguesResponse struct {
+	Success  bool     `json:"success"`
+	Platform string   `json:"platform"`
+	Leagues  []string `json:"leagues"`
+}
+
+// @Summary Get available leagues for a platform
+// @Description Retrieve list of all available leagues for a specific platform
+// @Tags riot
+// @Accept json
+// @Produce json
+// @Param platform path string true "Platform (e.g., na1, euw1, kr)"
+// @Success 200 {object} LeaguesResponse "List of available leagues"
+// @Failure 400 {string} string "Platform parameter is required"
+// @Failure 500 {string} string "Internal server error"
+// @Router /v1/signal/riot/leagues/{platform} [get]
+func (h *RiotHandler) getLeagues(w http.ResponseWriter, r *http.Request) {
+	platform := chi.URLParam(r, "platform")
+	if platform == "" {
+		http.Error(w, "Platform parameter is required", http.StatusBadRequest)
+		return
+	}
+
+	leagues, err := h.riotSvc.GetAllLeagues(r.Context(), platform)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Error getting leagues: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(w).Encode(LeaguesResponse{Success: true, Platform: platform, Leagues: leagues})
 }

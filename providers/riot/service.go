@@ -152,3 +152,13 @@ func (s *Service) GetChampions(ctx context.Context, version string) (*ChampionsR
 func (s *Service) GetChallengerLeague(ctx context.Context, platform, queue string) (*LeagueData, error) {
 	return s.client.GetChallengerLeague(platform, queue)
 }
+
+// GetAllLeagues obtiene todas las ligas disponibles para una plataforma
+func (s *Service) GetAllLeagues(ctx context.Context, platform string) ([]string, error) {
+	return s.client.GetAllLeagues(platform)
+}
+
+// GetGames obtiene la lista de juegos disponibles de Riot Games
+func (s *Service) GetGames(ctx context.Context) ([]string, error) {
+	return s.client.GetGames()
+}

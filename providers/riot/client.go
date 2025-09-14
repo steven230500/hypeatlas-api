@@ -514,3 +514,49 @@ func (c *Client) GetChampionMasteries(platform, puuid string) (ChampionMasteries
 
 	return masteries, nil
 }
+
+// GetAllLeagues obtiene todas las ligas disponibles para una plataforma
+func (c *Client) GetAllLeagues(platform string) ([]string, error) {
+	// Riot Games no tiene un endpoint directo para obtener todas las ligas
+	// Pero podemos obtener las ligas Challenger para las colas principales
+	queues := []string{"RANKED_SOLO_5x5", "RANKED_FLEX_SR", "RANKED_FLEX_TT"}
+
+	var leagues []string
+	for _, queue := range queues {
+		league, err := c.GetChallengerLeague(platform, queue)
+		if err != nil {
+			// Log error but continue with other queues
+			fmt.Printf("[RIOT-DEBUG] Error getting league for queue %s: %v\n", queue, err)
+			continue
+		}
+
+		// Add league name if not already in the list
+		found := false
+		for _, existing := range leagues {
+			if existing == league.Name {
+				found = true
+				break
+			}
+		}
+		if !found {
+			leagues = append(leagues, league.Name)
+		}
+	}
+
+	return leagues, nil
+}
+
+// GetGames obtiene la lista de juegos disponibles de Riot Games
+func (c *Client) GetGames() ([]string, error) {
+	// Lista de juegos principales de Riot Games
+	// Esta información podría venir de una API o ser hardcodeada
+	games := []string{
+		"League of Legends",
+		"Valorant",
+		"Teamfight Tactics",
+		"Legends of Runeterra",
+		"Wild Rift",
+	}
+
+	return games, nil
+}
