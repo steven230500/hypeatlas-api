@@ -177,3 +177,13 @@ func (s *Service) GetChampionStats(ctx context.Context, version string) (map[str
 func (s *Service) GetPatchChanges(ctx context.Context, fromVersion, toVersion string) (map[string]interface{}, error) {
 	return s.client.GetPatchChanges(fromVersion, toVersion)
 }
+
+// GetProfessionalLeagues obtiene información sobre ligas profesionales
+func (s *Service) GetProfessionalLeagues(ctx context.Context) (map[string]interface{}, error) {
+	return s.client.GetProfessionalLeagues()
+}
+
+// GetLeagueChampions obtiene estadísticas de campeones en una liga específica
+func (s *Service) GetLeagueChampions(ctx context.Context, league string) (map[string]interface{}, error) {
+	return s.client.GetLeagueChampions(league)
+}

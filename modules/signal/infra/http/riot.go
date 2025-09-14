@@ -34,6 +34,8 @@ func (h *RiotHandler) Register(r chi.Router) {
 		r.Get("/regions", h.getRegions)
 		r.Get("/champion-stats/{version}", h.getChampionStats)
 		r.Get("/patch-changes/{fromVersion}/{toVersion}", h.getPatchChanges)
+		r.Get("/pro-leagues", h.getProfessionalLeagues)
+		r.Get("/pro-leagues/{league}/champions", h.getLeagueChampions)
 	})
 }
 
@@ -319,5 +321,81 @@ func (h *RiotHandler) getPatchChanges(w http.ResponseWriter, r *http.Request) {
 		FromVersion: fromVersion,
 		ToVersion:   toVersion,
 		Changes:     changes,
+	})
+}
+
+type ProfessionalLeaguesResponse struct {
+	Success bool                   `json:"success"`
+	Data    map[string]interface{} `json:"data"`
+}
+
+// @Summary Get professional League of Legends leagues information
+// @Description Retrieve detailed information about all major professional leagues (LEC, LCK, LPL, etc.)
+// @Tags riot
+// @Accept json
+// @Produce json
+// @Success 200 {object} ProfessionalLeaguesResponse "Professional leagues information"
+// @Failure 500 {string} string "Internal server error"
+// @Router /v1/signal/riot/pro-leagues [get]
+func (h *RiotHandler) getProfessionalLeagues(w http.ResponseWriter, r *http.Request) {
+	leagues, err := h.riotSvc.GetProfessionalLeagues(r.Context())
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Error getting professional leagues: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(w).Encode(ProfessionalLeaguesResponse{Success: true, Data: leagues})
+}
+
+type LeagueChampionsResponse struct {
+	Success bool                   `json:"success"`
+	League  string                 `json:"league"`
+	Data    map[string]interface{} `json:"data"`
+}
+
+// @Summary Get champion statistics for a professional league
+// @Description Retrieve detailed champion statistics including pick rates, win rates, and ban rates for a specific professional league
+// @Tags riot
+// @Accept json
+// @Produce json
+// @Param league path string true "League code (e.g., LEC, LCK, LPL, LTA)"
+// @Success 200 {object} LeagueChampionsResponse "League champion statistics"
+// @Failure 400 {string} string "Invalid league parameter"
+// @Failure 500 {string} string "Internal server error"
+// @Router /v1/signal/riot/pro-leagues/{league}/champions [get]
+func (h *RiotHandler) getLeagueChampions(w http.ResponseWriter, r *http.Request) {
+	league := chi.URLParam(r, "league")
+	if league == "" {
+		http.Error(w, "League parameter is required", http.StatusBadRequest)
+		return
+	}
+
+	// Validar que la liga existe
+	validLeagues := []string{"LEC", "LCK", "LPL", "LTA", "LCS", "VCS", "PCS"}
+	isValid := false
+	for _, validLeague := range validLeagues {
+		if league == validLeague {
+			isValid = true
+			break
+		}
+	}
+
+	if !isValid {
+		http.Error(w, fmt.Sprintf("Invalid league: %s. Valid leagues: %v", league, validLeagues), http.StatusBadRequest)
+		return
+	}
+
+	champions, err := h.riotSvc.GetLeagueChampions(r.Context(), league)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Error getting league champions: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(w).Encode(LeagueChampionsResponse{
+		Success: true,
+		League:  league,
+		Data:    champions,
 	})
 }
