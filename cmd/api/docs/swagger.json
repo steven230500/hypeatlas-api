@@ -1,0 +1,23 @@
+{
+    "schemes": [
+        "https",
+        "http"
+    ],
+    "swagger": "2.0",
+    "info": {
+        "description": "Relay (HypeMap), Signal (MetaLens) y Comps \u0026 Leagues.",
+        "title": "HypeAtlas API",
+        "contact": {},
+        "version": "1.0"
+    },
+    "host": "api.hypeatlas.app",
+    "basePath": "/",
+    "paths": {},
+    "securityDefinitions": {
+        "ApiKeyAuth": {
+            "type": "apiKey",
+            "name": "X-API-Key",
+            "in": "header"
+        }
+    }
+}

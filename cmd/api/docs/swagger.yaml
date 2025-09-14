@@ -1,0 +1,17 @@
+basePath: /
+host: api.hypeatlas.app
+info:
+  contact: {}
+  description: Relay (HypeMap), Signal (MetaLens) y Comps & Leagues.
+  title: HypeAtlas API
+  version: "1.0"
+paths: {}
+schemes:
+- https
+- http
+securityDefinitions:
+  ApiKeyAuth:
+    in: header
+    name: X-API-Key
+    type: apiKey
+swagger: "2.0"

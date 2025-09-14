@@ -62,6 +62,17 @@ HypeAtlas is a comprehensive API platform that provides real-time meta-game anal
 - `GET /v1/signal/riot/champions/{version}/{championID}` - Get detailed champion information
 - `GET /v1/signal/riot/patch-notes/{fromVersion}/{toVersion}` - Compare changes between patches
 
+### Data Dragon Images API
+- `GET /v1/signal/riot/images/champions/{version}/{championID}` - Get champion image URLs (icon, splash, loading, tile)
+- `GET /v1/signal/riot/images/champions/{version}/{championID}/{skinNum}` - Get champion skin image URLs
+- `GET /v1/signal/riot/images/items/{version}/{itemID}` - Get item image URL
+- `GET /v1/signal/riot/images/spells/{version}/{spellName}` - Get summoner spell image URL
+- `GET /v1/signal/riot/images/runes/{runeIcon}` - Get rune image URL
+- `GET /v1/signal/riot/images/profile-icons/{version}/{iconID}` - Get profile icon image URL
+- `GET /v1/signal/riot/images/maps/{version}/{mapID}` - Get map image URL
+- `GET /v1/signal/riot/images/abilities/{version}/{abilityName}` - Get champion ability image URL
+- `GET /v1/signal/riot/images/passives/{version}/{passiveFile}` - Get champion passive image URL
+
 ## 🛠 Installation & Setup
 
 ### Prerequisites
@@ -142,6 +153,43 @@ curl -s "http://localhost:8080/v1/signal/riot/items/15.18.1" | jq '.data | keys 
 curl -s "http://localhost:8080/v1/signal/riot/patch-notes/15.17.1/15.18.1" | jq .
 ```
 
+#### Data Dragon Images API Examples
+
+**Get Champion Images (all types):**
+```bash
+curl -s "http://localhost:8080/v1/signal/riot/images/champions/15.18.1/Ahri" | jq .
+```
+
+**Get Champion Skin Images:**
+```bash
+curl -s "http://localhost:8080/v1/signal/riot/images/champions/15.18.1/Ahri/1" | jq .
+```
+
+**Get Item Image:**
+```bash
+curl -s "http://localhost:8080/v1/signal/riot/images/items/15.18.1/1001" | jq .
+```
+
+**Get Summoner Spell Image:**
+```bash
+curl -s "http://localhost:8080/v1/signal/riot/images/spells/15.18.1/SummonerFlash" | jq .
+```
+
+**Get Rune Image:**
+```bash
+curl -s "http://localhost:8080/v1/signal/riot/images/runes/perk-images/Styles/Domination/Electrocute/Electrocute.png" | jq .
+```
+
+**Get Profile Icon Image:**
+```bash
+curl -s "http://localhost:8080/v1/signal/riot/images/profile-icons/15.18.1/1" | jq .
+```
+
+**Get Map Image:**
+```bash
+curl -s "http://localhost:8080/v1/signal/riot/images/maps/15.18.1/11" | jq .
+```
+
 ## 🏗 Architecture
 
 ### Clean Architecture
@@ -163,6 +211,7 @@ curl -s "http://localhost:8080/v1/signal/riot/patch-notes/15.17.1/15.18.1" | jq 
 - **Swagger**: API documentation
 - **Docker**: Containerization
 - **Data Dragon API**: Official League of Legends static data
+- **Data Dragon Images API**: Complete image URLs for champions, items, runes, and abilities
 - **Riot Games APIs**: Champion rotations, league data, and player statistics
 
 ## 🔧 Configuration
@@ -238,6 +287,7 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 - **Riot Games**: For providing comprehensive League of Legends APIs
 - **Data Dragon API**: For complete static game data including champions, items, runes, and summoner spells
+- **Data Dragon Images API**: For official League of Legends image assets and CDN hosting
 - **Riot Developer Community**: For documentation and support
 - **Open Source Community**: For the amazing Go ecosystem
 

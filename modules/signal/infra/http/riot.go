@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/steven230500/hypeatlas-api/domain/entities"
@@ -19,6 +20,7 @@ type RiotHandler struct {
 	championStatsSvc      *riot.ChampionStatsService
 	professionalLeagueSvc *riot.ProfessionalLeagueService
 	dataDragonSvc         *riot.DataDragonService
+	imageSvc              *riot.ImageService
 }
 
 func NewRiotHandler(riotSvc *riot.Service, sigSvc in.Service, metaGameSvc *service.MetaGameService) *RiotHandler {
@@ -33,6 +35,7 @@ func NewRiotHandler(riotSvc *riot.Service, sigSvc in.Service, metaGameSvc *servi
 		championStatsSvc:      riot.NewChampionStatsService(tempClient),
 		professionalLeagueSvc: riot.NewProfessionalLeagueService(tempClient),
 		dataDragonSvc:         riot.NewDataDragonService(tempClient),
+		imageSvc:              riot.NewImageService(tempClient),
 	}
 }
 
@@ -58,6 +61,17 @@ func (h *RiotHandler) Register(r chi.Router) {
 		r.Get("/summoner-spells/{version}", h.getSummonerSpells)
 		r.Get("/champions/{version}/{championID}", h.getChampionDetails)
 		r.Get("/patch-notes/{fromVersion}/{toVersion}", h.getPatchNotes)
+
+		// Image endpoints
+		r.Get("/images/champions/{version}/{championID}", h.getChampionImages)
+		r.Get("/images/champions/{version}/{championID}/{skinNum}", h.getChampionSkinImages)
+		r.Get("/images/items/{version}/{itemID}", h.getItemImage)
+		r.Get("/images/spells/{version}/{spellName}", h.getSpellImage)
+		r.Get("/images/runes/{runeIcon}", h.getRuneImage)
+		r.Get("/images/profile-icons/{version}/{iconID}", h.getProfileIconImage)
+		r.Get("/images/maps/{version}/{mapID}", h.getMapImage)
+		r.Get("/images/abilities/{version}/{abilityName}", h.getAbilityImage)
+		r.Get("/images/passives/{version}/{passiveFile}", h.getPassiveImage)
 	})
 }
 
@@ -619,5 +633,403 @@ func (h *RiotHandler) getPatchNotes(w http.ResponseWriter, r *http.Request) {
 		FromVersion: fromVersion,
 		ToVersion:   toVersion,
 		Data:        notes,
+	})
+}
+
+// Image Handlers
+
+type ChampionImagesResponse struct {
+	Success  bool                   `json:"success"`
+	Version  string                 `json:"version"`
+	Champion string                 `json:"champion"`
+	Data     map[string]interface{} `json:"data"`
+}
+
+// @Summary Get champion image URLs
+// @Description Retrieve all available image URLs for a specific champion
+// @Tags riot
+// @Accept json
+// @Produce json
+// @Param version path string true "Game version (e.g., 13.24.1)"
+// @Param championID path string true "Champion ID (e.g., Ahri, Jinx)"
+// @Success 200 {object} ChampionImagesResponse "Champion image URLs"
+// @Failure 400 {string} string "Version and championID parameters are required"
+// @Failure 500 {string} string "Internal server error"
+// @Router /v1/signal/riot/images/champions/{version}/{championID} [get]
+func (h *RiotHandler) getChampionImages(w http.ResponseWriter, r *http.Request) {
+	version := chi.URLParam(r, "version")
+	championID := chi.URLParam(r, "championID")
+
+	if version == "" || championID == "" {
+		http.Error(w, "Version and championID parameters are required", http.StatusBadRequest)
+		return
+	}
+
+	images, err := h.imageSvc.GetChampionImageURLs(r.Context(), version, championID, 0)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Error getting champion images: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(w).Encode(ChampionImagesResponse{
+		Success:  true,
+		Version:  version,
+		Champion: championID,
+		Data:     images,
+	})
+}
+
+type ChampionSkinImagesResponse struct {
+	Success  bool                   `json:"success"`
+	Version  string                 `json:"version"`
+	Champion string                 `json:"champion"`
+	SkinNum  int                    `json:"skin_num"`
+	Data     map[string]interface{} `json:"data"`
+}
+
+// @Summary Get champion skin image URLs
+// @Description Retrieve all available image URLs for a specific champion skin
+// @Tags riot
+// @Accept json
+// @Produce json
+// @Param version path string true "Game version (e.g., 13.24.1)"
+// @Param championID path string true "Champion ID (e.g., Ahri, Jinx)"
+// @Param skinNum path int true "Skin number (0 for default skin)"
+// @Success 200 {object} ChampionSkinImagesResponse "Champion skin image URLs"
+// @Failure 400 {string} string "Parameters are required"
+// @Failure 500 {string} string "Internal server error"
+// @Router /v1/signal/riot/images/champions/{version}/{championID}/{skinNum} [get]
+func (h *RiotHandler) getChampionSkinImages(w http.ResponseWriter, r *http.Request) {
+	version := chi.URLParam(r, "version")
+	championID := chi.URLParam(r, "championID")
+	skinNumStr := chi.URLParam(r, "skinNum")
+
+	if version == "" || championID == "" || skinNumStr == "" {
+		http.Error(w, "Version, championID, and skinNum parameters are required", http.StatusBadRequest)
+		return
+	}
+
+	skinNum, err := strconv.Atoi(skinNumStr)
+	if err != nil {
+		http.Error(w, "Invalid skin number", http.StatusBadRequest)
+		return
+	}
+
+	images, err := h.imageSvc.GetChampionImageURLs(r.Context(), version, championID, skinNum)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Error getting champion skin images: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(w).Encode(ChampionSkinImagesResponse{
+		Success:  true,
+		Version:  version,
+		Champion: championID,
+		SkinNum:  skinNum,
+		Data:     images,
+	})
+}
+
+type ItemImageResponse struct {
+	Success bool                   `json:"success"`
+	Version string                 `json:"version"`
+	ItemID  string                 `json:"item_id"`
+	Data    map[string]interface{} `json:"data"`
+}
+
+// @Summary Get item image URL
+// @Description Retrieve the image URL for a specific item
+// @Tags riot
+// @Accept json
+// @Produce json
+// @Param version path string true "Game version (e.g., 13.24.1)"
+// @Param itemID path string true "Item ID (e.g., 1001, 3153)"
+// @Success 200 {object} ItemImageResponse "Item image URL"
+// @Failure 400 {string} string "Parameters are required"
+// @Failure 500 {string} string "Internal server error"
+// @Router /v1/signal/riot/images/items/{version}/{itemID} [get]
+func (h *RiotHandler) getItemImage(w http.ResponseWriter, r *http.Request) {
+	version := chi.URLParam(r, "version")
+	itemID := chi.URLParam(r, "itemID")
+
+	if version == "" || itemID == "" {
+		http.Error(w, "Version and itemID parameters are required", http.StatusBadRequest)
+		return
+	}
+
+	image, err := h.imageSvc.GetItemImageURL(r.Context(), version, itemID)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Error getting item image: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(w).Encode(ItemImageResponse{
+		Success: true,
+		Version: version,
+		ItemID:  itemID,
+		Data:    image,
+	})
+}
+
+type SpellImageResponse struct {
+	Success   bool                   `json:"success"`
+	Version   string                 `json:"version"`
+	SpellName string                 `json:"spell_name"`
+	Data      map[string]interface{} `json:"data"`
+}
+
+// @Summary Get summoner spell image URL
+// @Description Retrieve the image URL for a specific summoner spell
+// @Tags riot
+// @Accept json
+// @Produce json
+// @Param version path string true "Game version (e.g., 13.24.1)"
+// @Param spellName path string true "Spell name (e.g., SummonerFlash, SummonerHeal)"
+// @Success 200 {object} SpellImageResponse "Spell image URL"
+// @Failure 400 {string} string "Parameters are required"
+// @Failure 500 {string} string "Internal server error"
+// @Router /v1/signal/riot/images/spells/{version}/{spellName} [get]
+func (h *RiotHandler) getSpellImage(w http.ResponseWriter, r *http.Request) {
+	version := chi.URLParam(r, "version")
+	spellName := chi.URLParam(r, "spellName")
+
+	if version == "" || spellName == "" {
+		http.Error(w, "Version and spellName parameters are required", http.StatusBadRequest)
+		return
+	}
+
+	image, err := h.imageSvc.GetSpellImageURL(r.Context(), version, spellName)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Error getting spell image: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(w).Encode(SpellImageResponse{
+		Success:   true,
+		Version:   version,
+		SpellName: spellName,
+		Data:      image,
+	})
+}
+
+type RuneImageResponse struct {
+	Success  bool                   `json:"success"`
+	RuneIcon string                 `json:"rune_icon"`
+	Data     map[string]interface{} `json:"data"`
+}
+
+// @Summary Get rune image URL
+// @Description Retrieve the image URL for a specific rune
+// @Tags riot
+// @Accept json
+// @Produce json
+// @Param runeIcon path string true "Rune icon path (e.g., perk-images/Styles/Domination/Electrocute/Electrocute.png)"
+// @Success 200 {object} RuneImageResponse "Rune image URL"
+// @Failure 400 {string} string "Rune icon parameter is required"
+// @Failure 500 {string} string "Internal server error"
+// @Router /v1/signal/riot/images/runes/{runeIcon} [get]
+func (h *RiotHandler) getRuneImage(w http.ResponseWriter, r *http.Request) {
+	runeIcon := chi.URLParam(r, "runeIcon")
+
+	if runeIcon == "" {
+		http.Error(w, "Rune icon parameter is required", http.StatusBadRequest)
+		return
+	}
+
+	image, err := h.imageSvc.GetRuneImageURL(r.Context(), runeIcon)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Error getting rune image: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(w).Encode(RuneImageResponse{
+		Success:  true,
+		RuneIcon: runeIcon,
+		Data:     image,
+	})
+}
+
+type ProfileIconImageResponse struct {
+	Success bool                   `json:"success"`
+	Version string                 `json:"version"`
+	IconID  int                    `json:"icon_id"`
+	Data    map[string]interface{} `json:"data"`
+}
+
+// @Summary Get profile icon image URL
+// @Description Retrieve the image URL for a specific profile icon
+// @Tags riot
+// @Accept json
+// @Produce json
+// @Param version path string true "Game version (e.g., 13.24.1)"
+// @Param iconID path int true "Profile icon ID"
+// @Success 200 {object} ProfileIconImageResponse "Profile icon image URL"
+// @Failure 400 {string} string "Parameters are required"
+// @Failure 500 {string} string "Internal server error"
+// @Router /v1/signal/riot/images/profile-icons/{version}/{iconID} [get]
+func (h *RiotHandler) getProfileIconImage(w http.ResponseWriter, r *http.Request) {
+	version := chi.URLParam(r, "version")
+	iconIDStr := chi.URLParam(r, "iconID")
+
+	if version == "" || iconIDStr == "" {
+		http.Error(w, "Version and iconID parameters are required", http.StatusBadRequest)
+		return
+	}
+
+	iconID, err := strconv.Atoi(iconIDStr)
+	if err != nil {
+		http.Error(w, "Invalid icon ID", http.StatusBadRequest)
+		return
+	}
+
+	image, err := h.imageSvc.GetProfileIconImageURL(r.Context(), version, iconID)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Error getting profile icon image: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(w).Encode(ProfileIconImageResponse{
+		Success: true,
+		Version: version,
+		IconID:  iconID,
+		Data:    image,
+	})
+}
+
+type MapImageResponse struct {
+	Success bool                   `json:"success"`
+	Version string                 `json:"version"`
+	MapID   int                    `json:"map_id"`
+	Data    map[string]interface{} `json:"data"`
+}
+
+// @Summary Get map image URL
+// @Description Retrieve the image URL for a specific map
+// @Tags riot
+// @Accept json
+// @Produce json
+// @Param version path string true "Game version (e.g., 13.24.1)"
+// @Param mapID path int true "Map ID (e.g., 11 for Summoner's Rift)"
+// @Success 200 {object} MapImageResponse "Map image URL"
+// @Failure 400 {string} string "Parameters are required"
+// @Failure 500 {string} string "Internal server error"
+// @Router /v1/signal/riot/images/maps/{version}/{mapID} [get]
+func (h *RiotHandler) getMapImage(w http.ResponseWriter, r *http.Request) {
+	version := chi.URLParam(r, "version")
+	mapIDStr := chi.URLParam(r, "mapID")
+
+	if version == "" || mapIDStr == "" {
+		http.Error(w, "Version and mapID parameters are required", http.StatusBadRequest)
+		return
+	}
+
+	mapID, err := strconv.Atoi(mapIDStr)
+	if err != nil {
+		http.Error(w, "Invalid map ID", http.StatusBadRequest)
+		return
+	}
+
+	image, err := h.imageSvc.GetMapImageURL(r.Context(), version, mapID)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Error getting map image: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(w).Encode(MapImageResponse{
+		Success: true,
+		Version: version,
+		MapID:   mapID,
+		Data:    image,
+	})
+}
+
+type AbilityImageResponse struct {
+	Success     bool                   `json:"success"`
+	Version     string                 `json:"version"`
+	AbilityName string                 `json:"ability_name"`
+	Data        map[string]interface{} `json:"data"`
+}
+
+// @Summary Get champion ability image URL
+// @Description Retrieve the image URL for a specific champion ability
+// @Tags riot
+// @Accept json
+// @Produce json
+// @Param version path string true "Game version (e.g., 13.24.1)"
+// @Param abilityName path string true "Ability name (e.g., AhriQ, AhriW)"
+// @Success 200 {object} AbilityImageResponse "Ability image URL"
+// @Failure 400 {string} string "Parameters are required"
+// @Failure 500 {string} string "Internal server error"
+// @Router /v1/signal/riot/images/abilities/{version}/{abilityName} [get]
+func (h *RiotHandler) getAbilityImage(w http.ResponseWriter, r *http.Request) {
+	version := chi.URLParam(r, "version")
+	abilityName := chi.URLParam(r, "abilityName")
+
+	if version == "" || abilityName == "" {
+		http.Error(w, "Version and abilityName parameters are required", http.StatusBadRequest)
+		return
+	}
+
+	image, err := h.imageSvc.GetAbilityImageURL(r.Context(), version, abilityName)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Error getting ability image: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(w).Encode(AbilityImageResponse{
+		Success:     true,
+		Version:     version,
+		AbilityName: abilityName,
+		Data:        image,
+	})
+}
+
+type PassiveImageResponse struct {
+	Success     bool                   `json:"success"`
+	Version     string                 `json:"version"`
+	PassiveFile string                 `json:"passive_file"`
+	Data        map[string]interface{} `json:"data"`
+}
+
+// @Summary Get champion passive image URL
+// @Description Retrieve the image URL for a specific champion passive
+// @Tags riot
+// @Accept json
+// @Produce json
+// @Param version path string true "Game version (e.g., 13.24.1)"
+// @Param passiveFile path string true "Passive file name"
+// @Success 200 {object} PassiveImageResponse "Passive image URL"
+// @Failure 400 {string} string "Parameters are required"
+// @Failure 500 {string} string "Internal server error"
+// @Router /v1/signal/riot/images/passives/{version}/{passiveFile} [get]
+func (h *RiotHandler) getPassiveImage(w http.ResponseWriter, r *http.Request) {
+	version := chi.URLParam(r, "version")
+	passiveFile := chi.URLParam(r, "passiveFile")
+
+	if version == "" || passiveFile == "" {
+		http.Error(w, "Version and passiveFile parameters are required", http.StatusBadRequest)
+		return
+	}
+
+	image, err := h.imageSvc.GetPassiveImageURL(r.Context(), version, passiveFile)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Error getting passive image: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(w).Encode(PassiveImageResponse{
+		Success:     true,
+		Version:     version,
+		PassiveFile: passiveFile,
+		Data:        image,
 	})
 }

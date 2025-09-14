@@ -290,3 +290,157 @@ func (s *DataDragonService) GetPatchNotes(ctx context.Context, fromVersion, toVe
 	// Usar el método del cliente que ya implementamos
 	return s.client.GetPatchNotes(fromVersion, toVersion)
 }
+
+// ImageService maneja la lógica de URLs de imágenes de Data Dragon
+type ImageService struct {
+	client *Client
+}
+
+// NewImageService crea un nuevo servicio de imágenes
+func NewImageService(client *Client) *ImageService {
+	return &ImageService{client: client}
+}
+
+// GetChampionImageURLs obtiene todas las URLs de imágenes disponibles para un campeón
+func (s *ImageService) GetChampionImageURLs(ctx context.Context, version, championID string, skinNum int) (map[string]interface{}, error) {
+	baseURL := "https://ddragon.leagueoflegends.com/cdn"
+
+	imageURLs := map[string]interface{}{
+		"version":  version,
+		"champion": championID,
+		"skin_num": skinNum,
+		"images": map[string]string{
+			// Icono del campeón (48x48)
+			"icon": fmt.Sprintf("%s/%s/img/champion/%s.png", baseURL, version, championID),
+
+			// Splash art (1208x512)
+			"splash": fmt.Sprintf("%s/img/champion/splash/%s_%d.jpg", baseURL, championID, skinNum),
+
+			// Pantalla de carga (1024x768)
+			"loading": fmt.Sprintf("%s/img/champion/loading/%s_%d.jpg", baseURL, championID, skinNum),
+
+			// Tile (mini splash) (380x224)
+			"tile": fmt.Sprintf("%s/img/champion/tiles/%s_%d.jpg", baseURL, championID, skinNum),
+		},
+	}
+
+	return imageURLs, nil
+}
+
+// GetItemImageURL obtiene la URL de imagen para un item específico
+func (s *ImageService) GetItemImageURL(ctx context.Context, version, itemID string) (map[string]interface{}, error) {
+	baseURL := "https://ddragon.leagueoflegends.com/cdn"
+
+	imageURL := map[string]interface{}{
+		"version": version,
+		"item_id": itemID,
+		"image": map[string]interface{}{
+			"url":    fmt.Sprintf("%s/%s/img/item/%s.png", baseURL, version, itemID),
+			"size":   "64x64",
+			"format": "png",
+		},
+	}
+
+	return imageURL, nil
+}
+
+// GetSpellImageURL obtiene la URL de imagen para un summoner spell
+func (s *ImageService) GetSpellImageURL(ctx context.Context, version, spellName string) (map[string]interface{}, error) {
+	baseURL := "https://ddragon.leagueoflegends.com/cdn"
+
+	imageURL := map[string]interface{}{
+		"version": version,
+		"spell":   spellName,
+		"image": map[string]interface{}{
+			"url":    fmt.Sprintf("%s/%s/img/spell/%s.png", baseURL, version, spellName),
+			"size":   "64x64",
+			"format": "png",
+		},
+	}
+
+	return imageURL, nil
+}
+
+// GetRuneImageURL obtiene la URL de imagen para una runa
+func (s *ImageService) GetRuneImageURL(ctx context.Context, runeIcon string) (map[string]interface{}, error) {
+	baseURL := "https://ddragon.leagueoflegends.com/cdn"
+
+	imageURL := map[string]interface{}{
+		"rune_icon": runeIcon,
+		"image": map[string]interface{}{
+			"url":    fmt.Sprintf("%s/img/%s", baseURL, runeIcon),
+			"size":   "48x48",
+			"format": "png",
+		},
+	}
+
+	return imageURL, nil
+}
+
+// GetProfileIconImageURL obtiene la URL de imagen para un ícono de perfil
+func (s *ImageService) GetProfileIconImageURL(ctx context.Context, version string, iconID int) (map[string]interface{}, error) {
+	baseURL := "https://ddragon.leagueoflegends.com/cdn"
+
+	imageURL := map[string]interface{}{
+		"version": version,
+		"icon_id": iconID,
+		"image": map[string]interface{}{
+			"url":    fmt.Sprintf("%s/%s/img/profileicon/%d.png", baseURL, version, iconID),
+			"size":   "48x48",
+			"format": "png",
+		},
+	}
+
+	return imageURL, nil
+}
+
+// GetMapImageURL obtiene la URL de imagen para un mapa
+func (s *ImageService) GetMapImageURL(ctx context.Context, version string, mapID int) (map[string]interface{}, error) {
+	baseURL := "https://ddragon.leagueoflegends.com/cdn"
+
+	imageURL := map[string]interface{}{
+		"version": version,
+		"map_id":  mapID,
+		"image": map[string]interface{}{
+			"url":    fmt.Sprintf("%s/%s/img/map/map%d.png", baseURL, version, mapID),
+			"size":   "512x512",
+			"format": "png",
+		},
+	}
+
+	return imageURL, nil
+}
+
+// GetAbilityImageURL obtiene la URL de imagen para una habilidad de campeón
+func (s *ImageService) GetAbilityImageURL(ctx context.Context, version, abilityName string) (map[string]interface{}, error) {
+	baseURL := "https://ddragon.leagueoflegends.com/cdn"
+
+	imageURL := map[string]interface{}{
+		"version": version,
+		"ability": abilityName,
+		"image": map[string]interface{}{
+			"url":    fmt.Sprintf("%s/%s/img/spell/%s.png", baseURL, version, abilityName),
+			"size":   "64x64",
+			"format": "png",
+		},
+	}
+
+	return imageURL, nil
+}
+
+// GetPassiveImageURL obtiene la URL de imagen para la pasiva de un campeón
+func (s *ImageService) GetPassiveImageURL(ctx context.Context, version, passiveFile string) (map[string]interface{}, error) {
+	baseURL := "https://ddragon.leagueoflegends.com/cdn"
+
+	imageURL := map[string]interface{}{
+		"version": version,
+		"passive": passiveFile,
+		"image": map[string]interface{}{
+			"url":    fmt.Sprintf("%s/%s/img/passive/%s.png", baseURL, version, passiveFile),
+			"size":   "48x48",
+			"format": "png",
+		},
+	}
+
+	return imageURL, nil
+}
