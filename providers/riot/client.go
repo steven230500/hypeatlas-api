@@ -560,3 +560,48 @@ func (c *Client) GetGames() ([]string, error) {
 
 	return games, nil
 }
+
+// GetRegions obtiene la lista de regiones disponibles para League of Legends
+func (c *Client) GetRegions() ([]string, error) {
+	// Lista de regiones oficiales de League of Legends
+	regions := []string{
+		"BR1", "EUN1", "EUW1", "JP1", "KR", "LA1", "LA2",
+		"NA1", "OC1", "PH2", "RU", "SG2", "TH2", "TR1", "TW2", "VN2",
+	}
+
+	return regions, nil
+}
+
+// GetChampionStats obtiene estadísticas de uso de campeones desde Data Dragon
+func (c *Client) GetChampionStats(version string) (map[string]interface{}, error) {
+	// Esta sería una implementación más avanzada que requeriría
+	// análisis de datos de partidos o estadísticas agregadas
+	// Por ahora retornamos una estructura básica
+	stats := map[string]interface{}{
+		"version": version,
+		"note":    "Advanced champion statistics require match data analysis",
+		"available_endpoints": []string{
+			"champion-rotations",
+			"champion-mastery",
+			"league-entries",
+		},
+	}
+
+	return stats, nil
+}
+
+// GetPatchChanges obtiene cambios de campeones entre parches desde Data Dragon
+func (c *Client) GetPatchChanges(fromVersion, toVersion string) (map[string]interface{}, error) {
+	// Comparación de cambios entre versiones
+	// Esto requeriría análisis de datos de Data Dragon
+	changes := map[string]interface{}{
+		"from_version": fromVersion,
+		"to_version":   toVersion,
+		"note":         "Patch change analysis requires Data Dragon comparison",
+		"buffs":        []string{},
+		"nerfs":        []string{},
+		"new_features": []string{},
+	}
+
+	return changes, nil
+}

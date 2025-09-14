@@ -162,3 +162,18 @@ func (s *Service) GetAllLeagues(ctx context.Context, platform string) ([]string,
 func (s *Service) GetGames(ctx context.Context) ([]string, error) {
 	return s.client.GetGames()
 }
+
+// GetRegions obtiene la lista de regiones disponibles para League of Legends
+func (s *Service) GetRegions(ctx context.Context) ([]string, error) {
+	return s.client.GetRegions()
+}
+
+// GetChampionStats obtiene estadísticas de uso de campeones
+func (s *Service) GetChampionStats(ctx context.Context, version string) (map[string]interface{}, error) {
+	return s.client.GetChampionStats(version)
+}
+
+// GetPatchChanges obtiene cambios de campeones entre parches
+func (s *Service) GetPatchChanges(ctx context.Context, fromVersion, toVersion string) (map[string]interface{}, error) {
+	return s.client.GetPatchChanges(fromVersion, toVersion)
+}

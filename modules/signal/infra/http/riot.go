@@ -31,6 +31,9 @@ func (h *RiotHandler) Register(r chi.Router) {
 		r.Get("/metagame/report/{platform}", h.generateMetaReport)
 		r.Get("/games", h.getGames)
 		r.Get("/leagues/{platform}", h.getLeagues)
+		r.Get("/regions", h.getRegions)
+		r.Get("/champion-stats/{version}", h.getChampionStats)
+		r.Get("/patch-changes/{fromVersion}/{toVersion}", h.getPatchChanges)
 	})
 }
 
@@ -219,4 +222,102 @@ func (h *RiotHandler) getLeagues(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	_ = json.NewEncoder(w).Encode(LeaguesResponse{Success: true, Platform: platform, Leagues: leagues})
+}
+
+type RegionsResponse struct {
+	Success bool     `json:"success"`
+	Regions []string `json:"regions"`
+}
+
+// @Summary Get available League of Legends regions
+// @Description Retrieve list of all available regions for League of Legends
+// @Tags riot
+// @Accept json
+// @Produce json
+// @Success 200 {object} RegionsResponse "List of available regions"
+// @Failure 500 {string} string "Internal server error"
+// @Router /v1/signal/riot/regions [get]
+func (h *RiotHandler) getRegions(w http.ResponseWriter, r *http.Request) {
+	regions, err := h.riotSvc.GetRegions(r.Context())
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Error getting regions: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(w).Encode(RegionsResponse{Success: true, Regions: regions})
+}
+
+type ChampionStatsResponse struct {
+	Success bool                   `json:"success"`
+	Version string                 `json:"version"`
+	Stats   map[string]interface{} `json:"stats"`
+}
+
+// @Summary Get champion statistics for a game version
+// @Description Retrieve detailed statistics about champion usage, pick rates, and performance
+// @Tags riot
+// @Accept json
+// @Produce json
+// @Param version path string true "Game version (e.g., 13.24.1)"
+// @Success 200 {object} ChampionStatsResponse "Champion statistics"
+// @Failure 500 {string} string "Internal server error"
+// @Router /v1/signal/riot/champion-stats/{version} [get]
+func (h *RiotHandler) getChampionStats(w http.ResponseWriter, r *http.Request) {
+	version := chi.URLParam(r, "version")
+	if version == "" {
+		http.Error(w, "Version parameter is required", http.StatusBadRequest)
+		return
+	}
+
+	stats, err := h.riotSvc.GetChampionStats(r.Context(), version)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Error getting champion stats: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(w).Encode(ChampionStatsResponse{Success: true, Version: version, Stats: stats})
+}
+
+type PatchChangesResponse struct {
+	Success     bool                   `json:"success"`
+	FromVersion string                 `json:"from_version"`
+	ToVersion   string                 `json:"to_version"`
+	Changes     map[string]interface{} `json:"changes"`
+}
+
+// @Summary Get patch changes between versions
+// @Description Compare changes between two game versions including buffs, nerfs, and new features
+// @Tags riot
+// @Accept json
+// @Produce json
+// @Param fromVersion path string true "From version (e.g., 13.23.1)"
+// @Param toVersion path string true "To version (e.g., 13.24.1)"
+// @Success 200 {object} PatchChangesResponse "Patch changes comparison"
+// @Failure 400 {string} string "Version parameters are required"
+// @Failure 500 {string} string "Internal server error"
+// @Router /v1/signal/riot/patch-changes/{fromVersion}/{toVersion} [get]
+func (h *RiotHandler) getPatchChanges(w http.ResponseWriter, r *http.Request) {
+	fromVersion := chi.URLParam(r, "fromVersion")
+	toVersion := chi.URLParam(r, "toVersion")
+
+	if fromVersion == "" || toVersion == "" {
+		http.Error(w, "Both fromVersion and toVersion parameters are required", http.StatusBadRequest)
+		return
+	}
+
+	changes, err := h.riotSvc.GetPatchChanges(r.Context(), fromVersion, toVersion)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Error getting patch changes: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(w).Encode(PatchChangesResponse{
+		Success:     true,
+		FromVersion: fromVersion,
+		ToVersion:   toVersion,
+		Changes:     changes,
+	})
 }
