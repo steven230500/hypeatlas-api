@@ -10,7 +10,7 @@ services:
     image: ghcr.io/steven230500/hypeatlas-api-api:${TAG:-latest}
     <<: *common_env
     ports:
-      - "127.0.0.1:8080:8080"  # Solo loopback; Caddy hace de proxy
+      - "0.0.0.0:8080:8080"  # Disponible en todas las interfaces para health checks
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8080/healthz"]
       interval: 15s
