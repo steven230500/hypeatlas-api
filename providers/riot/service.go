@@ -238,3 +238,55 @@ func (s *ProfessionalLeagueService) ValidateLeague(league string) bool {
 	}
 	return false
 }
+
+// DataDragonService maneja la lógica de Data Dragon API
+type DataDragonService struct {
+	client *Client
+}
+
+// NewDataDragonService crea un nuevo servicio de Data Dragon
+func NewDataDragonService(client *Client) *DataDragonService {
+	return &DataDragonService{client: client}
+}
+
+// GetGameVersions obtiene todas las versiones disponibles del juego
+func (s *DataDragonService) GetGameVersions(ctx context.Context) ([]string, error) {
+	versions, err := s.client.GetLatestVersion()
+	if err != nil {
+		return nil, fmt.Errorf("error getting latest version: %w", err)
+	}
+
+	// Para obtener todas las versiones, usamos la API de versiones
+	// Por ahora devolvemos solo la última versión
+	return []string{versions}, nil
+}
+
+// GetItems obtiene datos de items para una versión específica
+func (s *DataDragonService) GetItems(ctx context.Context, version string) (map[string]interface{}, error) {
+	// Usar el método del cliente que ya implementamos
+	return s.client.GetItems(version)
+}
+
+// GetRunes obtiene datos de runas para una versión específica
+func (s *DataDragonService) GetRunes(ctx context.Context, version string) (map[string]interface{}, error) {
+	// Usar el método del cliente que ya implementamos
+	return s.client.GetRunes(version)
+}
+
+// GetSummonerSpells obtiene datos de summoner spells para una versión específica
+func (s *DataDragonService) GetSummonerSpells(ctx context.Context, version string) (map[string]interface{}, error) {
+	// Usar el método del cliente que ya implementamos
+	return s.client.GetSummonerSpells(version)
+}
+
+// GetChampionDetails obtiene detalles completos de un campeón específico
+func (s *DataDragonService) GetChampionDetails(ctx context.Context, version, championID string) (map[string]interface{}, error) {
+	// Usar el método del cliente que ya implementamos
+	return s.client.GetChampionDetails(version, championID)
+}
+
+// GetPatchNotes obtiene información de cambios entre parches
+func (s *DataDragonService) GetPatchNotes(ctx context.Context, fromVersion, toVersion string) (map[string]interface{}, error) {
+	// Usar el método del cliente que ya implementamos
+	return s.client.GetPatchNotes(fromVersion, toVersion)
+}

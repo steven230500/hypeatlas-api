@@ -18,6 +18,7 @@ type RiotHandler struct {
 	metaGameSvc           *service.MetaGameService
 	championStatsSvc      *riot.ChampionStatsService
 	professionalLeagueSvc *riot.ProfessionalLeagueService
+	dataDragonSvc         *riot.DataDragonService
 }
 
 func NewRiotHandler(riotSvc *riot.Service, sigSvc in.Service, metaGameSvc *service.MetaGameService) *RiotHandler {
@@ -31,6 +32,7 @@ func NewRiotHandler(riotSvc *riot.Service, sigSvc in.Service, metaGameSvc *servi
 		metaGameSvc:           metaGameSvc,
 		championStatsSvc:      riot.NewChampionStatsService(tempClient),
 		professionalLeagueSvc: riot.NewProfessionalLeagueService(tempClient),
+		dataDragonSvc:         riot.NewDataDragonService(tempClient),
 	}
 }
 
@@ -48,6 +50,14 @@ func (h *RiotHandler) Register(r chi.Router) {
 		r.Get("/patch-changes/{fromVersion}/{toVersion}", h.getPatchChanges)
 		r.Get("/pro-leagues", h.getProfessionalLeagues)
 		r.Get("/pro-leagues/{league}/champions", h.getLeagueChampions)
+
+		// Data Dragon endpoints
+		r.Get("/versions", h.getGameVersions)
+		r.Get("/items/{version}", h.getItems)
+		r.Get("/runes/{version}", h.getRunes)
+		r.Get("/summoner-spells/{version}", h.getSummonerSpells)
+		r.Get("/champions/{version}/{championID}", h.getChampionDetails)
+		r.Get("/patch-notes/{fromVersion}/{toVersion}", h.getPatchNotes)
 	})
 }
 
@@ -402,5 +412,212 @@ func (h *RiotHandler) getLeagueChampions(w http.ResponseWriter, r *http.Request)
 		Success: true,
 		League:  league,
 		Data:    champions,
+	})
+}
+
+type GameVersionsResponse struct {
+	Success  bool     `json:"success"`
+	Versions []string `json:"versions"`
+}
+
+// @Summary Get available game versions
+// @Description Retrieve list of all available League of Legends game versions from Data Dragon
+// @Tags riot
+// @Accept json
+// @Produce json
+// @Success 200 {object} GameVersionsResponse "List of game versions"
+// @Failure 500 {string} string "Internal server error"
+// @Router /v1/signal/riot/versions [get]
+func (h *RiotHandler) getGameVersions(w http.ResponseWriter, r *http.Request) {
+	versions, err := h.dataDragonSvc.GetGameVersions(r.Context())
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Error getting game versions: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(w).Encode(GameVersionsResponse{Success: true, Versions: versions})
+}
+
+type ItemsResponse struct {
+	Success bool                   `json:"success"`
+	Version string                 `json:"version"`
+	Data    map[string]interface{} `json:"data"`
+}
+
+// @Summary Get items data for a specific version
+// @Description Retrieve detailed information about all items for a specific game version from Data Dragon
+// @Tags riot
+// @Accept json
+// @Produce json
+// @Param version path string true "Game version (e.g., 13.24.1)"
+// @Success 200 {object} ItemsResponse "Items data"
+// @Failure 400 {string} string "Version parameter is required"
+// @Failure 500 {string} string "Internal server error"
+// @Router /v1/signal/riot/items/{version} [get]
+func (h *RiotHandler) getItems(w http.ResponseWriter, r *http.Request) {
+	version := chi.URLParam(r, "version")
+	if version == "" {
+		http.Error(w, "Version parameter is required", http.StatusBadRequest)
+		return
+	}
+
+	items, err := h.dataDragonSvc.GetItems(r.Context(), version)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Error getting items: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(w).Encode(ItemsResponse{Success: true, Version: version, Data: items})
+}
+
+type RunesResponse struct {
+	Success bool                   `json:"success"`
+	Version string                 `json:"version"`
+	Data    map[string]interface{} `json:"data"`
+}
+
+// @Summary Get runes data for a specific version
+// @Description Retrieve detailed information about all runes for a specific game version from Data Dragon
+// @Tags riot
+// @Accept json
+// @Produce json
+// @Param version path string true "Game version (e.g., 13.24.1)"
+// @Success 200 {object} RunesResponse "Runes data"
+// @Failure 400 {string} string "Version parameter is required"
+// @Failure 500 {string} string "Internal server error"
+// @Router /v1/signal/riot/runes/{version} [get]
+func (h *RiotHandler) getRunes(w http.ResponseWriter, r *http.Request) {
+	version := chi.URLParam(r, "version")
+	if version == "" {
+		http.Error(w, "Version parameter is required", http.StatusBadRequest)
+		return
+	}
+
+	runes, err := h.dataDragonSvc.GetRunes(r.Context(), version)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Error getting runes: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(w).Encode(RunesResponse{Success: true, Version: version, Data: runes})
+}
+
+type SummonerSpellsResponse struct {
+	Success bool                   `json:"success"`
+	Version string                 `json:"version"`
+	Data    map[string]interface{} `json:"data"`
+}
+
+// @Summary Get summoner spells data for a specific version
+// @Description Retrieve detailed information about all summoner spells for a specific game version from Data Dragon
+// @Tags riot
+// @Accept json
+// @Produce json
+// @Param version path string true "Game version (e.g., 13.24.1)"
+// @Success 200 {object} SummonerSpellsResponse "Summoner spells data"
+// @Failure 400 {string} string "Version parameter is required"
+// @Failure 500 {string} string "Internal server error"
+// @Router /v1/signal/riot/summoner-spells/{version} [get]
+func (h *RiotHandler) getSummonerSpells(w http.ResponseWriter, r *http.Request) {
+	version := chi.URLParam(r, "version")
+	if version == "" {
+		http.Error(w, "Version parameter is required", http.StatusBadRequest)
+		return
+	}
+
+	spells, err := h.dataDragonSvc.GetSummonerSpells(r.Context(), version)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Error getting summoner spells: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(w).Encode(SummonerSpellsResponse{Success: true, Version: version, Data: spells})
+}
+
+type ChampionDetailsResponse struct {
+	Success    bool                   `json:"success"`
+	Version    string                 `json:"version"`
+	ChampionID string                 `json:"champion_id"`
+	Data       map[string]interface{} `json:"data"`
+}
+
+// @Summary Get detailed champion information
+// @Description Retrieve complete information about a specific champion for a game version from Data Dragon
+// @Tags riot
+// @Accept json
+// @Produce json
+// @Param version path string true "Game version (e.g., 13.24.1)"
+// @Param championID path string true "Champion ID (e.g., Ahri, Jinx)"
+// @Success 200 {object} ChampionDetailsResponse "Champion details"
+// @Failure 400 {string} string "Version and championID parameters are required"
+// @Failure 500 {string} string "Internal server error"
+// @Router /v1/signal/riot/champions/{version}/{championID} [get]
+func (h *RiotHandler) getChampionDetails(w http.ResponseWriter, r *http.Request) {
+	version := chi.URLParam(r, "version")
+	championID := chi.URLParam(r, "championID")
+
+	if version == "" || championID == "" {
+		http.Error(w, "Version and championID parameters are required", http.StatusBadRequest)
+		return
+	}
+
+	details, err := h.dataDragonSvc.GetChampionDetails(r.Context(), version, championID)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Error getting champion details: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(w).Encode(ChampionDetailsResponse{
+		Success:    true,
+		Version:    version,
+		ChampionID: championID,
+		Data:       details,
+	})
+}
+
+type PatchNotesResponse struct {
+	Success     bool                   `json:"success"`
+	FromVersion string                 `json:"from_version"`
+	ToVersion   string                 `json:"to_version"`
+	Data        map[string]interface{} `json:"data"`
+}
+
+// @Summary Get patch notes and changes between versions
+// @Description Compare changes between two game versions including new/removed champions and modifications
+// @Tags riot
+// @Accept json
+// @Produce json
+// @Param fromVersion path string true "From version (e.g., 13.23.1)"
+// @Param toVersion path string true "To version (e.g., 13.24.1)"
+// @Success 200 {object} PatchNotesResponse "Patch notes comparison"
+// @Failure 400 {string} string "Version parameters are required"
+// @Failure 500 {string} string "Internal server error"
+// @Router /v1/signal/riot/patch-notes/{fromVersion}/{toVersion} [get]
+func (h *RiotHandler) getPatchNotes(w http.ResponseWriter, r *http.Request) {
+	fromVersion := chi.URLParam(r, "fromVersion")
+	toVersion := chi.URLParam(r, "toVersion")
+
+	if fromVersion == "" || toVersion == "" {
+		http.Error(w, "Both fromVersion and toVersion parameters are required", http.StatusBadRequest)
+		return
+	}
+
+	notes, err := h.dataDragonSvc.GetPatchNotes(r.Context(), fromVersion, toVersion)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Error getting patch notes: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(w).Encode(PatchNotesResponse{
+		Success:     true,
+		FromVersion: fromVersion,
+		ToVersion:   toVersion,
+		Data:        notes,
 	})
 }

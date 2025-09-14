@@ -769,6 +769,187 @@ func (c *Client) GetPatchChanges(fromVersion, toVersion string) (map[string]inte
 	return changes, nil
 }
 
+// GetItems obtiene datos de items para una versión específica desde Data Dragon
+func (c *Client) GetItems(version string) (map[string]interface{}, error) {
+	url := fmt.Sprintf("https://ddragon.leagueoflegends.com/cdn/%s/data/en_US/item.json", version)
+
+	resp, err := c.makeRequestWithoutAuth("GET", url, nil)
+	if err != nil {
+		return nil, fmt.Errorf("error making request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("API returned status %d", resp.StatusCode)
+	}
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("error reading response: %w", err)
+	}
+
+	var result map[string]interface{}
+	if err := json.Unmarshal(body, &result); err != nil {
+		return nil, fmt.Errorf("error parsing response: %w", err)
+	}
+
+	return result, nil
+}
+
+// GetRunes obtiene datos de runas para una versión específica desde Data Dragon
+func (c *Client) GetRunes(version string) (map[string]interface{}, error) {
+	url := fmt.Sprintf("https://ddragon.leagueoflegends.com/cdn/%s/data/en_US/runesReforged.json", version)
+
+	resp, err := c.makeRequestWithoutAuth("GET", url, nil)
+	if err != nil {
+		return nil, fmt.Errorf("error making request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("API returned status %d", resp.StatusCode)
+	}
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("error reading response: %w", err)
+	}
+
+	var result []interface{}
+	if err := json.Unmarshal(body, &result); err != nil {
+		return nil, fmt.Errorf("error parsing response: %w", err)
+	}
+
+	return map[string]interface{}{
+		"runes":   result,
+		"version": version,
+	}, nil
+}
+
+// GetSummonerSpells obtiene datos de summoner spells para una versión específica desde Data Dragon
+func (c *Client) GetSummonerSpells(version string) (map[string]interface{}, error) {
+	url := fmt.Sprintf("https://ddragon.leagueoflegends.com/cdn/%s/data/en_US/summoner.json", version)
+
+	resp, err := c.makeRequestWithoutAuth("GET", url, nil)
+	if err != nil {
+		return nil, fmt.Errorf("error making request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("API returned status %d", resp.StatusCode)
+	}
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("error reading response: %w", err)
+	}
+
+	var result map[string]interface{}
+	if err := json.Unmarshal(body, &result); err != nil {
+		return nil, fmt.Errorf("error parsing response: %w", err)
+	}
+
+	return result, nil
+}
+
+// GetChampionDetails obtiene detalles completos de un campeón específico desde Data Dragon
+func (c *Client) GetChampionDetails(version, championID string) (map[string]interface{}, error) {
+	url := fmt.Sprintf("https://ddragon.leagueoflegends.com/cdn/%s/data/en_US/champion/%s.json", version, championID)
+
+	resp, err := c.makeRequestWithoutAuth("GET", url, nil)
+	if err != nil {
+		return nil, fmt.Errorf("error making request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("API returned status %d", resp.StatusCode)
+	}
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("error reading response: %w", err)
+	}
+
+	var result map[string]interface{}
+	if err := json.Unmarshal(body, &result); err != nil {
+		return nil, fmt.Errorf("error parsing response: %w", err)
+	}
+
+	return result, nil
+}
+
+// GetPatchNotes obtiene información de cambios entre parches desde Data Dragon
+func (c *Client) GetPatchNotes(fromVersion, toVersion string) (map[string]interface{}, error) {
+	// Obtener campeones de ambas versiones
+	fromChampions, err := c.GetChampions(fromVersion)
+	if err != nil {
+		return nil, fmt.Errorf("error getting champions for version %s: %w", fromVersion, err)
+	}
+
+	toChampions, err := c.GetChampions(toVersion)
+	if err != nil {
+		return nil, fmt.Errorf("error getting champions for version %s: %w", toVersion, err)
+	}
+
+	// Crear mapa de campeones por ID para comparación
+	fromChampMap := make(map[string]ChampionData)
+	for _, champ := range fromChampions.Data {
+		fromChampMap[champ.ID] = champ
+	}
+
+	// Analizar cambios
+	changes := map[string]interface{}{
+		"from_version":         fromVersion,
+		"to_version":           toVersion,
+		"total_champions_from": len(fromChampions.Data),
+		"total_champions_to":   len(toChampions.Data),
+		"new_champions":        []map[string]interface{}{},
+		"removed_champions":    []map[string]interface{}{},
+		"summary": map[string]int{
+			"added":    0,
+			"removed":  0,
+			"modified": 0,
+		},
+	}
+
+	// Encontrar campeones nuevos
+	for _, champ := range toChampions.Data {
+		if _, exists := fromChampMap[champ.ID]; !exists {
+			newChamp := map[string]interface{}{
+				"id":    champ.ID,
+				"name":  champ.Name,
+				"title": champ.Title,
+			}
+			changes["new_champions"] = append(changes["new_champions"].([]map[string]interface{}), newChamp)
+			changes["summary"].(map[string]int)["added"]++
+		}
+	}
+
+	// Encontrar campeones removidos
+	for _, champ := range fromChampions.Data {
+		found := false
+		for _, toChamp := range toChampions.Data {
+			if champ.ID == toChamp.ID {
+				found = true
+				break
+			}
+		}
+		if !found {
+			removedChamp := map[string]interface{}{
+				"id":    champ.ID,
+				"name":  champ.Name,
+				"title": champ.Title,
+			}
+			changes["removed_champions"] = append(changes["removed_champions"].([]map[string]interface{}), removedChamp)
+			changes["summary"].(map[string]int)["removed"]++
+		}
+	}
+
+	return changes, nil
+}
+
 // GetProfessionalLeagues obtiene información sobre ligas profesionales de League of Legends
 func (c *Client) GetProfessionalLeagues() (map[string]interface{}, error) {
 	// Lista de ligas profesionales principales
