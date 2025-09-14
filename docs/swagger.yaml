@@ -266,6 +266,16 @@ definitions:
       viewers:
         type: integer
     type: object
+  modules_signal_infra_http.ChampionStatsResponse:
+    properties:
+      stats:
+        additionalProperties: true
+        type: object
+      success:
+        type: boolean
+      version:
+        type: string
+    type: object
   modules_signal_infra_http.ChangesResp:
     properties:
       items:
@@ -280,12 +290,54 @@ definitions:
           $ref: '#/definitions/github_com_steven230500_hypeatlas-api_domain_entities.Comp'
         type: array
     type: object
+  modules_signal_infra_http.GamesResponse:
+    properties:
+      games:
+        items:
+          type: string
+        type: array
+      success:
+        type: boolean
+    type: object
+  modules_signal_infra_http.LeagueChampionsResponse:
+    properties:
+      data:
+        additionalProperties: true
+        type: object
+      league:
+        type: string
+      success:
+        type: boolean
+    type: object
   modules_signal_infra_http.LeaguesResp:
     properties:
       items:
         items:
           $ref: '#/definitions/github_com_steven230500_hypeatlas-api_domain_entities.League'
         type: array
+    type: object
+  modules_signal_infra_http.LeaguesResponse:
+    properties:
+      leagues:
+        items:
+          type: string
+        type: array
+      platform:
+        type: string
+      success:
+        type: boolean
+    type: object
+  modules_signal_infra_http.PatchChangesResponse:
+    properties:
+      changes:
+        additionalProperties: true
+        type: object
+      from_version:
+        type: string
+      success:
+        type: boolean
+      to_version:
+        type: string
     type: object
   modules_signal_infra_http.PatchInfoResponse:
     properties:
@@ -300,6 +352,23 @@ definitions:
         items:
           $ref: '#/definitions/github_com_steven230500_hypeatlas-api_domain_entities.Patch'
         type: array
+    type: object
+  modules_signal_infra_http.ProfessionalLeaguesResponse:
+    properties:
+      data:
+        additionalProperties: true
+        type: object
+      success:
+        type: boolean
+    type: object
+  modules_signal_infra_http.RegionsResponse:
+    properties:
+      regions:
+        items:
+          type: string
+        type: array
+      success:
+        type: boolean
     type: object
   modules_signal_infra_http.SyncPatchesResponse:
     properties:
@@ -644,6 +713,80 @@ paths:
       summary: Listar parches por juego
       tags:
       - signal
+  /v1/signal/riot/champion-stats/{version}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve detailed statistics about champion usage, pick rates,
+        and performance
+      parameters:
+      - description: Game version (e.g., 13.24.1)
+        in: path
+        name: version
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Champion statistics
+          schema:
+            $ref: '#/definitions/modules_signal_infra_http.ChampionStatsResponse'
+        "500":
+          description: Internal server error
+          schema:
+            type: string
+      summary: Get champion statistics for a game version
+      tags:
+      - riot
+  /v1/signal/riot/games:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve list of all available games from Riot Games
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of available games
+          schema:
+            $ref: '#/definitions/modules_signal_infra_http.GamesResponse'
+        "500":
+          description: Internal server error
+          schema:
+            type: string
+      summary: Get available Riot Games
+      tags:
+      - riot
+  /v1/signal/riot/leagues/{platform}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve list of all available leagues for a specific platform
+      parameters:
+      - description: Platform (e.g., na1, euw1, kr)
+        in: path
+        name: platform
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of available leagues
+          schema:
+            $ref: '#/definitions/modules_signal_infra_http.LeaguesResponse'
+        "400":
+          description: Platform parameter is required
+          schema:
+            type: string
+        "500":
+          description: Internal server error
+          schema:
+            type: string
+      summary: Get available leagues for a platform
+      tags:
+      - riot
   /v1/signal/riot/metagame/league/{platform}/{queue}:
     get:
       consumes:
@@ -742,6 +885,41 @@ paths:
       summary: Analyze weekly champion rotation
       tags:
       - riot
+  /v1/signal/riot/patch-changes/{fromVersion}/{toVersion}:
+    get:
+      consumes:
+      - application/json
+      description: Compare changes between two game versions including buffs, nerfs,
+        and new features
+      parameters:
+      - description: From version (e.g., 13.23.1)
+        in: path
+        name: fromVersion
+        required: true
+        type: string
+      - description: To version (e.g., 13.24.1)
+        in: path
+        name: toVersion
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Patch changes comparison
+          schema:
+            $ref: '#/definitions/modules_signal_infra_http.PatchChangesResponse'
+        "400":
+          description: Version parameters are required
+          schema:
+            type: string
+        "500":
+          description: Internal server error
+          schema:
+            type: string
+      summary: Get patch changes between versions
+      tags:
+      - riot
   /v1/signal/riot/patches/{version}:
     get:
       consumes:
@@ -769,6 +947,75 @@ paths:
           schema:
             type: string
       summary: Get detailed patch information
+      tags:
+      - riot
+  /v1/signal/riot/pro-leagues:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve detailed information about all major professional leagues
+        (LEC, LCK, LPL, etc.)
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Professional leagues information
+          schema:
+            $ref: '#/definitions/modules_signal_infra_http.ProfessionalLeaguesResponse'
+        "500":
+          description: Internal server error
+          schema:
+            type: string
+      summary: Get professional League of Legends leagues information
+      tags:
+      - riot
+  /v1/signal/riot/pro-leagues/{league}/champions:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve detailed champion statistics including pick rates, win
+        rates, and ban rates for a specific professional league
+      parameters:
+      - description: League code (e.g., LEC, LCK, LPL, LTA)
+        in: path
+        name: league
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: League champion statistics
+          schema:
+            $ref: '#/definitions/modules_signal_infra_http.LeagueChampionsResponse'
+        "400":
+          description: Invalid league parameter
+          schema:
+            type: string
+        "500":
+          description: Internal server error
+          schema:
+            type: string
+      summary: Get champion statistics for a professional league
+      tags:
+      - riot
+  /v1/signal/riot/regions:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve list of all available regions for League of Legends
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of available regions
+          schema:
+            $ref: '#/definitions/modules_signal_infra_http.RegionsResponse'
+        "500":
+          description: Internal server error
+          schema:
+            type: string
+      summary: Get available League of Legends regions
       tags:
       - riot
   /v1/signal/riot/sync/patches:
