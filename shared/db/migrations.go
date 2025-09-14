@@ -25,7 +25,14 @@ func ensureSchema(g *gorm.DB) {
 
 	// Manejar columnas created_at/updated_at existentes con datos NULL
 	// Primero agregar como nullable, luego actualizar valores, finalmente hacer NOT NULL
-	tables := []string{"events", "event_windows", "event_stream_rules"}
+	tables := []string{
+		"events", "event_windows", "event_stream_rules",
+		"creators", "costreams", "patch_changes", "metrics", "games",
+		"event_rules", "leagues", "notifications", "sessions",
+		"stream_sources", "ingestion_logs", "patches", "hype_thresholds",
+		"users", "comps", "league_rankings", "champion_mastery_stats",
+		"meta_game_analyses", "champion_rotations",
+	}
 	for _, table := range tables {
 		// Agregar created_at si no existe
 		_ = g.Exec(`ALTER TABLE app.` + table + ` ADD COLUMN IF NOT EXISTS created_at timestamptz`).Error
