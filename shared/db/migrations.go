@@ -22,6 +22,23 @@ func ensureSchema(g *gorm.DB) {
 		_ = g.Exec(`ALTER TABLE app.events DROP CONSTRAINT IF EXISTS "` + constraint + `"`).Error
 		_ = g.Exec(`DROP INDEX IF EXISTS app.` + constraint).Error
 	}
+
+	// Manejar columnas created_at/updated_at existentes con datos NULL
+	// Primero agregar como nullable, luego actualizar valores, finalmente hacer NOT NULL
+	tables := []string{"events", "event_windows", "event_stream_rules"}
+	for _, table := range tables {
+		// Agregar created_at si no existe
+		_ = g.Exec(`ALTER TABLE app.` + table + ` ADD COLUMN IF NOT EXISTS created_at timestamptz`).Error
+		// Actualizar valores NULL con NOW()
+		_ = g.Exec(`UPDATE app.` + table + ` SET created_at = NOW() WHERE created_at IS NULL`).Error
+		// Hacer NOT NULL
+		_ = g.Exec(`ALTER TABLE app.` + table + ` ALTER COLUMN created_at SET NOT NULL`).Error
+
+		// Lo mismo para updated_at
+		_ = g.Exec(`ALTER TABLE app.` + table + ` ADD COLUMN IF NOT EXISTS updated_at timestamptz`).Error
+		_ = g.Exec(`UPDATE app.` + table + ` SET updated_at = NOW() WHERE updated_at IS NULL`).Error
+		_ = g.Exec(`ALTER TABLE app.` + table + ` ALTER COLUMN updated_at SET NOT NULL`).Error
+	}
 }
 
 func Migrate(g *gorm.DB) {
