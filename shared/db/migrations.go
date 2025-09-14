@@ -24,27 +24,37 @@ func ensureSchema(g *gorm.DB) {
 	}
 
 	// Manejar columnas created_at/updated_at existentes con datos NULL
-	// Primero agregar como nullable, luego actualizar valores, finalmente hacer NOT NULL
-	tables := []string{
+	// Solo para tablas que ya existen, usar IF EXISTS para evitar errores
+	existingTables := []string{
 		"events", "event_windows", "event_stream_rules",
 		"creators", "costreams", "patch_changes", "metrics", "games",
 		"event_rules", "leagues", "notifications", "sessions",
 		"stream_sources", "ingestion_logs", "patches", "hype_thresholds",
 		"users", "comps", "league_rankings", "champion_mastery_stats",
-		"meta_game_analyses", "champion_rotations",
+		"meta_game_analyses",
 	}
-	for _, table := range tables {
-		// Agregar created_at si no existe
-		_ = g.Exec(`ALTER TABLE app.` + table + ` ADD COLUMN IF NOT EXISTS created_at timestamptz`).Error
-		// Actualizar valores NULL con NOW()
-		_ = g.Exec(`UPDATE app.` + table + ` SET created_at = NOW() WHERE created_at IS NULL`).Error
-		// Hacer NOT NULL
-		_ = g.Exec(`ALTER TABLE app.` + table + ` ALTER COLUMN created_at SET NOT NULL`).Error
 
-		// Lo mismo para updated_at
-		_ = g.Exec(`ALTER TABLE app.` + table + ` ADD COLUMN IF NOT EXISTS updated_at timestamptz`).Error
-		_ = g.Exec(`UPDATE app.` + table + ` SET updated_at = NOW() WHERE updated_at IS NULL`).Error
-		_ = g.Exec(`ALTER TABLE app.` + table + ` ALTER COLUMN updated_at SET NOT NULL`).Error
+	for _, table := range existingTables {
+		// Verificar si la tabla existe antes de intentar modificarla
+		var exists bool
+		_ = g.Raw(`SELECT EXISTS (
+			SELECT 1 FROM information_schema.tables
+			WHERE table_schema = 'app' AND table_name = ?
+		)`, table).Scan(&exists).Error
+
+		if exists {
+			// Agregar created_at si no existe
+			_ = g.Exec(`ALTER TABLE app.` + table + ` ADD COLUMN IF NOT EXISTS created_at timestamptz`).Error
+			// Actualizar valores NULL con NOW()
+			_ = g.Exec(`UPDATE app.` + table + ` SET created_at = NOW() WHERE created_at IS NULL`).Error
+			// Hacer NOT NULL solo si no hay NULLs
+			_ = g.Exec(`ALTER TABLE app.` + table + ` ALTER COLUMN created_at SET NOT NULL`).Error
+
+			// Lo mismo para updated_at
+			_ = g.Exec(`ALTER TABLE app.` + table + ` ADD COLUMN IF NOT EXISTS updated_at timestamptz`).Error
+			_ = g.Exec(`UPDATE app.` + table + ` SET updated_at = NOW() WHERE updated_at IS NULL`).Error
+			_ = g.Exec(`ALTER TABLE app.` + table + ` ALTER COLUMN updated_at SET NOT NULL`).Error
+		}
 	}
 }
 
