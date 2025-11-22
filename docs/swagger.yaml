@@ -1,11 +1,1782 @@
 basePath: /
+definitions:
+  github_com_steven230500_hypeatlas-api_domain_entities.CoStream:
+    properties:
+      country:
+        type: string
+      created_at:
+        type: string
+      creator:
+        $ref: '#/definitions/github_com_steven230500_hypeatlas-api_domain_entities.Creator'
+      creator_uuid:
+        type: string
+      event:
+        $ref: '#/definitions/github_com_steven230500_hypeatlas-api_domain_entities.Event'
+      event_uuid:
+        type: string
+      is_live:
+        type: boolean
+      lang:
+        type: string
+      last_seen_at:
+        type: string
+      platform:
+        description: twitch|youtube
+        type: string
+      updated_at:
+        type: string
+      url:
+        type: string
+      uuid:
+        type: string
+      verified:
+        type: boolean
+      viewers:
+        type: integer
+    type: object
+  github_com_steven230500_hypeatlas-api_domain_entities.Comp:
+    properties:
+      created_at:
+        type: string
+      delta_win:
+        type: number
+      game:
+        type: string
+      league:
+        type: string
+      map:
+        type: string
+      patch:
+        type: string
+      pick_rate:
+        type: number
+      region:
+        type: string
+      side:
+        type: string
+      slots:
+        items:
+          type: integer
+        type: array
+      updated_at:
+        type: string
+      uuid:
+        type: string
+      win_rate:
+        type: number
+    type: object
+  github_com_steven230500_hypeatlas-api_domain_entities.Creator:
+    properties:
+      country:
+        type: string
+      created_at:
+        type: string
+      handle:
+        type: string
+      lang:
+        type: string
+      platform:
+        type: string
+      updated_at:
+        type: string
+      url:
+        type: string
+      uuid:
+        type: string
+      verified:
+        type: boolean
+    type: object
+  github_com_steven230500_hypeatlas-api_domain_entities.Event:
+    properties:
+      created_at:
+        type: string
+      ends_at:
+        type: string
+      game:
+        description: val|lol
+        type: string
+      league:
+        type: string
+      slug:
+        type: string
+      starts_at:
+        type: string
+      title:
+        type: string
+      updated_at:
+        type: string
+      uuid:
+        type: string
+    type: object
+  github_com_steven230500_hypeatlas-api_domain_entities.HypeMapItem:
+    properties:
+      country:
+        type: string
+      event_slug:
+        type: string
+      event_title:
+        type: string
+      game:
+        type: string
+      handle:
+        type: string
+      is_live:
+        type: boolean
+      lang:
+        type: string
+      league:
+        type: string
+      platform:
+        type: string
+      score:
+        type: integer
+      viewers:
+        type: integer
+    type: object
+  github_com_steven230500_hypeatlas-api_domain_entities.HypeMapSummaryItem:
+    properties:
+      event_slug:
+        type: string
+      event_title:
+        type: string
+      game:
+        type: string
+      last_seen_at:
+        type: string
+      league:
+        type: string
+      streamers:
+        type: integer
+      total_viewers:
+        type: integer
+    type: object
+  github_com_steven230500_hypeatlas-api_domain_entities.League:
+    properties:
+      created_at:
+        type: string
+      game:
+        type: string
+      name:
+        type: string
+      region:
+        type: string
+      slug:
+        type: string
+      updated_at:
+        type: string
+      uuid:
+        type: string
+    type: object
+  github_com_steven230500_hypeatlas-api_domain_entities.Patch:
+    properties:
+      changes:
+        items:
+          $ref: '#/definitions/github_com_steven230500_hypeatlas-api_domain_entities.PatchChange'
+        type: array
+      created_at:
+        type: string
+      game:
+        description: val|lol
+        type: string
+      released_at:
+        type: string
+      updated_at:
+        type: string
+      uuid:
+        type: string
+      version:
+        type: string
+    type: object
+  github_com_steven230500_hypeatlas-api_domain_entities.PatchChange:
+    properties:
+      created_at:
+        type: string
+      entity_id:
+        type: string
+      entity_type:
+        description: champion|agent|item|weapon|map
+        type: string
+      field:
+        type: string
+      id:
+        type: integer
+      impact_score:
+        type: number
+      new:
+        type: string
+      old:
+        type: string
+      patch_uuid:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  modules_relay_infra_http.CoStreamsResp:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/github_com_steven230500_hypeatlas-api_domain_entities.CoStream'
+        type: array
+    type: object
+  modules_relay_infra_http.HypeMapLiveResp:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/github_com_steven230500_hypeatlas-api_domain_entities.HypeMapItem'
+        type: array
+      next_offset:
+        type: integer
+    type: object
+  modules_relay_infra_http.HypeMapSummaryResp:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/github_com_steven230500_hypeatlas-api_domain_entities.HypeMapSummaryItem'
+        type: array
+      next_offset:
+        type: integer
+    type: object
+  modules_relay_infra_http.upsertCoStreamReq:
+    properties:
+      country:
+        type: string
+      event_slug:
+        type: string
+      event_title:
+        type: string
+      game:
+        type: string
+      handle:
+        type: string
+      is_live:
+        type: boolean
+      lang:
+        type: string
+      league:
+        type: string
+      platform:
+        description: twitch|youtube
+        type: string
+      starts_at:
+        type: string
+      url:
+        type: string
+      verified:
+        type: boolean
+      viewers:
+        type: integer
+    type: object
+  modules_signal_infra_http.AbilityImageResponse:
+    properties:
+      ability_name:
+        type: string
+      data:
+        additionalProperties: true
+        type: object
+      success:
+        type: boolean
+      version:
+        type: string
+    type: object
+  modules_signal_infra_http.ChampionDetailsResponse:
+    properties:
+      champion_id:
+        type: string
+      data:
+        additionalProperties: true
+        type: object
+      success:
+        type: boolean
+      version:
+        type: string
+    type: object
+  modules_signal_infra_http.ChampionImagesResponse:
+    properties:
+      champion:
+        type: string
+      data:
+        additionalProperties: true
+        type: object
+      success:
+        type: boolean
+      version:
+        type: string
+    type: object
+  modules_signal_infra_http.ChampionSkinImagesResponse:
+    properties:
+      champion:
+        type: string
+      data:
+        additionalProperties: true
+        type: object
+      skin_num:
+        type: integer
+      success:
+        type: boolean
+      version:
+        type: string
+    type: object
+  modules_signal_infra_http.ChampionStatsResponse:
+    properties:
+      stats:
+        additionalProperties: true
+        type: object
+      success:
+        type: boolean
+      version:
+        type: string
+    type: object
+  modules_signal_infra_http.ChampionsListResponse:
+    properties:
+      champions:
+        items:
+          additionalProperties: true
+          type: object
+        type: array
+      success:
+        type: boolean
+      total:
+        type: integer
+      version:
+        type: string
+    type: object
+  modules_signal_infra_http.ChangesResp:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/github_com_steven230500_hypeatlas-api_domain_entities.PatchChange'
+        type: array
+    type: object
+  modules_signal_infra_http.CompsResp:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/github_com_steven230500_hypeatlas-api_domain_entities.Comp'
+        type: array
+    type: object
+  modules_signal_infra_http.GameVersionsResponse:
+    properties:
+      success:
+        type: boolean
+      versions:
+        items:
+          type: string
+        type: array
+    type: object
+  modules_signal_infra_http.GamesResponse:
+    properties:
+      games:
+        items:
+          type: string
+        type: array
+      success:
+        type: boolean
+    type: object
+  modules_signal_infra_http.ItemImageResponse:
+    properties:
+      data:
+        additionalProperties: true
+        type: object
+      item_id:
+        type: string
+      success:
+        type: boolean
+      version:
+        type: string
+    type: object
+  modules_signal_infra_http.ItemsResponse:
+    properties:
+      data:
+        additionalProperties: true
+        type: object
+      success:
+        type: boolean
+      version:
+        type: string
+    type: object
+  modules_signal_infra_http.LeagueChampionsResponse:
+    properties:
+      data:
+        additionalProperties: true
+        type: object
+      league:
+        type: string
+      success:
+        type: boolean
+    type: object
+  modules_signal_infra_http.LeaguesResp:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/github_com_steven230500_hypeatlas-api_domain_entities.League'
+        type: array
+    type: object
+  modules_signal_infra_http.LeaguesResponse:
+    properties:
+      leagues:
+        items:
+          type: string
+        type: array
+      platform:
+        type: string
+      success:
+        type: boolean
+    type: object
+  modules_signal_infra_http.MapImageResponse:
+    properties:
+      data:
+        additionalProperties: true
+        type: object
+      map_id:
+        type: integer
+      success:
+        type: boolean
+      version:
+        type: string
+    type: object
+  modules_signal_infra_http.PassiveImageResponse:
+    properties:
+      data:
+        additionalProperties: true
+        type: object
+      passive_file:
+        type: string
+      success:
+        type: boolean
+      version:
+        type: string
+    type: object
+  modules_signal_infra_http.PatchChangesResponse:
+    properties:
+      changes:
+        additionalProperties: true
+        type: object
+      from_version:
+        type: string
+      success:
+        type: boolean
+      to_version:
+        type: string
+    type: object
+  modules_signal_infra_http.PatchInfoResponse:
+    properties:
+      patch:
+        $ref: '#/definitions/github_com_steven230500_hypeatlas-api_domain_entities.Patch'
+      success:
+        type: boolean
+    type: object
+  modules_signal_infra_http.PatchNotesResponse:
+    properties:
+      data:
+        additionalProperties: true
+        type: object
+      from_version:
+        type: string
+      success:
+        type: boolean
+      to_version:
+        type: string
+    type: object
+  modules_signal_infra_http.PatchesResp:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/github_com_steven230500_hypeatlas-api_domain_entities.Patch'
+        type: array
+    type: object
+  modules_signal_infra_http.ProfessionalLeaguesResponse:
+    properties:
+      data:
+        additionalProperties: true
+        type: object
+      success:
+        type: boolean
+    type: object
+  modules_signal_infra_http.ProfileIconImageResponse:
+    properties:
+      data:
+        additionalProperties: true
+        type: object
+      icon_id:
+        type: integer
+      success:
+        type: boolean
+      version:
+        type: string
+    type: object
+  modules_signal_infra_http.RegionsResponse:
+    properties:
+      regions:
+        items:
+          type: string
+        type: array
+      success:
+        type: boolean
+    type: object
+  modules_signal_infra_http.RuneImageResponse:
+    properties:
+      data:
+        additionalProperties: true
+        type: object
+      rune_icon:
+        type: string
+      success:
+        type: boolean
+    type: object
+  modules_signal_infra_http.RunesResponse:
+    properties:
+      data:
+        additionalProperties: true
+        type: object
+      success:
+        type: boolean
+      version:
+        type: string
+    type: object
+  modules_signal_infra_http.SpellImageResponse:
+    properties:
+      data:
+        additionalProperties: true
+        type: object
+      spell_name:
+        type: string
+      success:
+        type: boolean
+      version:
+        type: string
+    type: object
+  modules_signal_infra_http.SummonerSpellsResponse:
+    properties:
+      data:
+        additionalProperties: true
+        type: object
+      success:
+        type: boolean
+      version:
+        type: string
+    type: object
+  modules_signal_infra_http.SyncPatchesResponse:
+    properties:
+      message:
+        type: string
+      success:
+        type: boolean
+      version:
+        type: string
+    type: object
+  modules_signal_infra_http.upsertCompReq:
+    properties:
+      delta_win:
+        type: number
+      game:
+        type: string
+      league:
+        type: string
+      map:
+        type: string
+      patch:
+        type: string
+      pick_rate:
+        type: number
+      region:
+        type: string
+      side:
+        type: string
+      slots:
+        additionalProperties: {}
+        type: object
+      win_rate:
+        type: number
+    type: object
 host: api.hypeatlas.app
 info:
   contact: {}
   description: Relay (HypeMap), Signal (MetaLens) y Comps & Leagues.
   title: HypeAtlas API
   version: "1.0"
-paths: {}
+paths:
+  /v1/hypemap/live:
+    get:
+      parameters:
+      - description: val|lol
+        in: query
+        name: game
+        type: string
+      - description: es|en|fr|pt
+        in: query
+        name: lang
+        type: string
+      - default: 50
+        description: 1-100
+        in: query
+        maximum: 100
+        minimum: 1
+        name: limit
+        type: integer
+      - default: 0
+        description: paginación
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/modules_relay_infra_http.HypeMapLiveResp'
+      summary: 'HypeMap: co-streams en vivo (ranking)'
+      tags:
+      - relay
+  /v1/hypemap/summary:
+    get:
+      parameters:
+      - description: val|lol
+        in: query
+        name: game
+        type: string
+      - description: es|en|fr|pt
+        in: query
+        name: lang
+        type: string
+      - default: 20
+        description: 1-100
+        in: query
+        maximum: 100
+        minimum: 1
+        name: limit
+        type: integer
+      - default: 0
+        description: paginación
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/modules_relay_infra_http.HypeMapSummaryResp'
+      summary: 'HypeMap: resumen por evento (agregado)'
+      tags:
+      - relay
+  /v1/ingest/relay/costreams:upsert:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/modules_relay_infra_http.upsertCoStreamReq'
+      responses:
+        "204":
+          description: no content
+        "400":
+          description: bad json
+          schema:
+            type: string
+        "500":
+          description: db error
+          schema:
+            type: string
+      security:
+      - ApiKeyAuth: []
+      summary: 'Ingest: upsert co-stream'
+      tags:
+      - ingest
+  /v1/ingest/signal/comps:upsert:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/modules_signal_infra_http.upsertCompReq'
+      responses:
+        "204":
+          description: no content
+        "400":
+          description: bad json
+          schema:
+            type: string
+        "500":
+          description: db error
+          schema:
+            type: string
+      security:
+      - ApiKeyAuth: []
+      summary: Upsert de composición (ingesta)
+      tags:
+      - ingest
+  /v1/relay/costreams:
+    get:
+      parameters:
+      - description: Slug o ID del evento (ej. vct-emea-final)
+        in: query
+        name: event_id
+        required: true
+        type: string
+      - description: Filtro por idioma (ej. es)
+        in: query
+        name: lang
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/modules_relay_infra_http.CoStreamsResp'
+        "400":
+          description: event_id required
+          schema:
+            type: string
+      summary: Listar co-streams en vivo de un evento
+      tags:
+      - relay
+  /v1/signal/champions:
+    get:
+      parameters:
+      - description: Versión del juego (ej. 14.14)
+        in: query
+        name: version
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: error
+          schema:
+            type: string
+      summary: Listar campeones
+      tags:
+      - signal
+  /v1/signal/changes:
+    get:
+      parameters:
+      - description: lol | val
+        enum:
+        - lol
+        - val
+        in: query
+        name: game
+        required: true
+        type: string
+      - description: 'Ej: 14.14 | 9.15'
+        in: query
+        name: version
+        required: true
+        type: string
+      - description: agent|champion|item|weapon|map
+        enum:
+        - agent
+        - champion
+        - item
+        - weapon
+        - map
+        in: query
+        name: type
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/modules_signal_infra_http.ChangesResp'
+        "400":
+          description: game and version required
+          schema:
+            type: string
+      summary: Listar cambios de un parche
+      tags:
+      - signal
+  /v1/signal/comps:
+    get:
+      parameters:
+      - description: lol | val
+        enum:
+        - lol
+        - val
+        in: query
+        name: game
+        required: true
+        type: string
+      - description: EMEA
+        in: query
+        name: region
+        required: true
+        type: string
+      - description: LEC
+        in: query
+        name: league
+        type: string
+      - description: 14.14 | 9.15
+        in: query
+        name: patch
+        required: true
+        type: string
+      - description: Ascent (solo VAL)
+        in: query
+        name: map
+        type: string
+      - description: 'LoL: blue/red | VAL: attack/defense'
+        enum:
+        - blue
+        - red
+        - attack
+        - defense
+        in: query
+        name: side
+        type: string
+      - default: 50
+        description: 1-100
+        in: query
+        maximum: 200
+        minimum: 1
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/modules_signal_infra_http.CompsResp'
+        "400":
+          description: game, region and patch required
+          schema:
+            type: string
+      summary: Listar composiciones (LoL/VAL) filtradas
+      tags:
+      - signal
+  /v1/signal/leagues:
+    get:
+      parameters:
+      - description: lol | val
+        enum:
+        - lol
+        - val
+        in: query
+        name: game
+        required: true
+        type: string
+      - description: EMEA | APAC | AMERICAS
+        enum:
+        - EMEA
+        - APAC
+        - AMERICAS
+        in: query
+        name: region
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/modules_signal_infra_http.LeaguesResp'
+        "400":
+          description: game required
+          schema:
+            type: string
+      summary: Listar ligas por juego y región
+      tags:
+      - signal
+  /v1/signal/patches:
+    get:
+      parameters:
+      - description: lol | val
+        enum:
+        - lol
+        - val
+        in: query
+        name: game
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/modules_signal_infra_http.PatchesResp'
+        "400":
+          description: game required
+          schema:
+            type: string
+      summary: Listar parches por juego
+      tags:
+      - signal
+  /v1/signal/regions:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: error
+          schema:
+            type: string
+      summary: Listar regiones disponibles
+      tags:
+      - signal
+  /v1/signal/riot/champion-stats/{version}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve detailed statistics about champion usage, pick rates,
+        and performance
+      parameters:
+      - description: Game version (e.g., 13.24.1)
+        in: path
+        name: version
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Champion statistics
+          schema:
+            $ref: '#/definitions/modules_signal_infra_http.ChampionStatsResponse'
+        "500":
+          description: Internal server error
+          schema:
+            type: string
+      summary: Get champion statistics for a game version
+      tags:
+      - riot
+  /v1/signal/riot/champions/{version}/{championID}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve complete information about a specific champion for a game
+        version from Data Dragon
+      parameters:
+      - description: Game version (e.g., 13.24.1)
+        in: path
+        name: version
+        required: true
+        type: string
+      - description: Champion ID (e.g., Ahri, Jinx)
+        in: path
+        name: championID
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Champion details
+          schema:
+            $ref: '#/definitions/modules_signal_infra_http.ChampionDetailsResponse'
+        "400":
+          description: Version and championID parameters are required
+          schema:
+            type: string
+        "500":
+          description: Internal server error
+          schema:
+            type: string
+      summary: Get detailed champion information
+      tags:
+      - riot
+  /v1/signal/riot/champions/{version}/list:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a complete list of all League of Legends champions for
+        a specific game version from Data Dragon
+      parameters:
+      - description: Game version (e.g., 13.24.1)
+        in: path
+        name: version
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of all champions
+          schema:
+            $ref: '#/definitions/modules_signal_infra_http.ChampionsListResponse'
+        "400":
+          description: Version parameter is required
+          schema:
+            type: string
+        "500":
+          description: Internal server error
+          schema:
+            type: string
+      summary: Get list of all champions
+      tags:
+      - riot
+  /v1/signal/riot/games:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve list of all available games from Riot Games
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of available games
+          schema:
+            $ref: '#/definitions/modules_signal_infra_http.GamesResponse'
+        "500":
+          description: Internal server error
+          schema:
+            type: string
+      summary: Get available Riot Games
+      tags:
+      - riot
+  /v1/signal/riot/images/abilities/{version}/{abilityName}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve the image URL for a specific champion ability
+      parameters:
+      - description: Game version (e.g., 13.24.1)
+        in: path
+        name: version
+        required: true
+        type: string
+      - description: Ability name (e.g., AhriQ, AhriW)
+        in: path
+        name: abilityName
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Ability image URL
+          schema:
+            $ref: '#/definitions/modules_signal_infra_http.AbilityImageResponse'
+        "400":
+          description: Parameters are required
+          schema:
+            type: string
+        "500":
+          description: Internal server error
+          schema:
+            type: string
+      summary: Get champion ability image URL
+      tags:
+      - riot
+  /v1/signal/riot/images/champions/{version}/{championID}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve all available image URLs for a specific champion
+      parameters:
+      - description: Game version (e.g., 13.24.1)
+        in: path
+        name: version
+        required: true
+        type: string
+      - description: Champion ID (e.g., Ahri, Jinx)
+        in: path
+        name: championID
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Champion image URLs
+          schema:
+            $ref: '#/definitions/modules_signal_infra_http.ChampionImagesResponse'
+        "400":
+          description: Version and championID parameters are required
+          schema:
+            type: string
+        "500":
+          description: Internal server error
+          schema:
+            type: string
+      summary: Get champion image URLs
+      tags:
+      - riot
+  /v1/signal/riot/images/champions/{version}/{championID}/{skinNum}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve all available image URLs for a specific champion skin
+      parameters:
+      - description: Game version (e.g., 13.24.1)
+        in: path
+        name: version
+        required: true
+        type: string
+      - description: Champion ID (e.g., Ahri, Jinx)
+        in: path
+        name: championID
+        required: true
+        type: string
+      - description: Skin number (0 for default skin)
+        in: path
+        name: skinNum
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Champion skin image URLs
+          schema:
+            $ref: '#/definitions/modules_signal_infra_http.ChampionSkinImagesResponse'
+        "400":
+          description: Parameters are required
+          schema:
+            type: string
+        "500":
+          description: Internal server error
+          schema:
+            type: string
+      summary: Get champion skin image URLs
+      tags:
+      - riot
+  /v1/signal/riot/images/items/{version}/{itemID}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve the image URL for a specific item
+      parameters:
+      - description: Game version (e.g., 13.24.1)
+        in: path
+        name: version
+        required: true
+        type: string
+      - description: Item ID (e.g., 1001, 3153)
+        in: path
+        name: itemID
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Item image URL
+          schema:
+            $ref: '#/definitions/modules_signal_infra_http.ItemImageResponse'
+        "400":
+          description: Parameters are required
+          schema:
+            type: string
+        "500":
+          description: Internal server error
+          schema:
+            type: string
+      summary: Get item image URL
+      tags:
+      - riot
+  /v1/signal/riot/images/maps/{version}/{mapID}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve the image URL for a specific map
+      parameters:
+      - description: Game version (e.g., 13.24.1)
+        in: path
+        name: version
+        required: true
+        type: string
+      - description: Map ID (e.g., 11 for Summoner's Rift)
+        in: path
+        name: mapID
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Map image URL
+          schema:
+            $ref: '#/definitions/modules_signal_infra_http.MapImageResponse'
+        "400":
+          description: Parameters are required
+          schema:
+            type: string
+        "500":
+          description: Internal server error
+          schema:
+            type: string
+      summary: Get map image URL
+      tags:
+      - riot
+  /v1/signal/riot/images/passives/{version}/{passiveFile}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve the image URL for a specific champion passive
+      parameters:
+      - description: Game version (e.g., 13.24.1)
+        in: path
+        name: version
+        required: true
+        type: string
+      - description: Passive file name
+        in: path
+        name: passiveFile
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Passive image URL
+          schema:
+            $ref: '#/definitions/modules_signal_infra_http.PassiveImageResponse'
+        "400":
+          description: Parameters are required
+          schema:
+            type: string
+        "500":
+          description: Internal server error
+          schema:
+            type: string
+      summary: Get champion passive image URL
+      tags:
+      - riot
+  /v1/signal/riot/images/profile-icons/{version}/{iconID}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve the image URL for a specific profile icon
+      parameters:
+      - description: Game version (e.g., 13.24.1)
+        in: path
+        name: version
+        required: true
+        type: string
+      - description: Profile icon ID
+        in: path
+        name: iconID
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Profile icon image URL
+          schema:
+            $ref: '#/definitions/modules_signal_infra_http.ProfileIconImageResponse'
+        "400":
+          description: Parameters are required
+          schema:
+            type: string
+        "500":
+          description: Internal server error
+          schema:
+            type: string
+      summary: Get profile icon image URL
+      tags:
+      - riot
+  /v1/signal/riot/images/runes/{runeIcon}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve the image URL for a specific rune
+      parameters:
+      - description: Rune icon path (e.g., perk-images/Styles/Domination/Electrocute/Electrocute.png)
+        in: path
+        name: runeIcon
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Rune image URL
+          schema:
+            $ref: '#/definitions/modules_signal_infra_http.RuneImageResponse'
+        "400":
+          description: Rune icon parameter is required
+          schema:
+            type: string
+        "500":
+          description: Internal server error
+          schema:
+            type: string
+      summary: Get rune image URL
+      tags:
+      - riot
+  /v1/signal/riot/images/spells/{version}/{spellName}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve the image URL for a specific summoner spell
+      parameters:
+      - description: Game version (e.g., 13.24.1)
+        in: path
+        name: version
+        required: true
+        type: string
+      - description: Spell name (e.g., SummonerFlash, SummonerHeal)
+        in: path
+        name: spellName
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Spell image URL
+          schema:
+            $ref: '#/definitions/modules_signal_infra_http.SpellImageResponse'
+        "400":
+          description: Parameters are required
+          schema:
+            type: string
+        "500":
+          description: Internal server error
+          schema:
+            type: string
+      summary: Get summoner spell image URL
+      tags:
+      - riot
+  /v1/signal/riot/items/{version}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve detailed information about all items for a specific game
+        version from Data Dragon
+      parameters:
+      - description: Game version (e.g., 13.24.1)
+        in: path
+        name: version
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Items data
+          schema:
+            $ref: '#/definitions/modules_signal_infra_http.ItemsResponse'
+        "400":
+          description: Version parameter is required
+          schema:
+            type: string
+        "500":
+          description: Internal server error
+          schema:
+            type: string
+      summary: Get items data for a specific version
+      tags:
+      - riot
+  /v1/signal/riot/leagues/{platform}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve list of all available leagues for a specific platform
+      parameters:
+      - description: Platform (e.g., na1, euw1, kr)
+        in: path
+        name: platform
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of available leagues
+          schema:
+            $ref: '#/definitions/modules_signal_infra_http.LeaguesResponse'
+        "400":
+          description: Platform parameter is required
+          schema:
+            type: string
+        "500":
+          description: Internal server error
+          schema:
+            type: string
+      summary: Get available leagues for a platform
+      tags:
+      - riot
+  /v1/signal/riot/metagame/league/{platform}/{queue}:
+    get:
+      consumes:
+      - application/json
+      description: Get detailed analysis of Challenger league including win rates,
+        LP distribution, and player statistics
+      parameters:
+      - description: Platform (e.g., na1, euw1, kr)
+        in: path
+        name: platform
+        required: true
+        type: string
+      - description: Queue type (e.g., RANKED_SOLO_5x5, RANKED_FLEX_SR)
+        in: path
+        name: queue
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: League analysis with statistics and rankings
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Platform and queue parameters are required
+          schema:
+            type: string
+        "500":
+          description: Internal server error
+          schema:
+            type: string
+      summary: Analyze league rankings and statistics
+      tags:
+      - riot
+  /v1/signal/riot/metagame/report/{platform}:
+    get:
+      consumes:
+      - application/json
+      description: Get complete meta-game analysis combining champion rotation and
+        league statistics with insights and recommendations
+      parameters:
+      - description: Platform (e.g., na1, euw1, kr)
+        in: path
+        name: platform
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Complete meta-game report with analysis and insights
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Platform parameter is required
+          schema:
+            type: string
+        "500":
+          description: Internal server error
+          schema:
+            type: string
+      summary: Generate comprehensive meta-game report
+      tags:
+      - riot
+  /v1/signal/riot/metagame/rotation/{platform}:
+    get:
+      consumes:
+      - application/json
+      description: Get detailed analysis of free champion rotation including tier
+        classification, pick rates, and strategic recommendations
+      parameters:
+      - description: Platform (e.g., na1, euw1, kr)
+        in: path
+        name: platform
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Analysis result with champion data and recommendations
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Platform parameter is required
+          schema:
+            type: string
+        "500":
+          description: Internal server error
+          schema:
+            type: string
+      summary: Analyze weekly champion rotation
+      tags:
+      - riot
+  /v1/signal/riot/patch-changes/{fromVersion}/{toVersion}:
+    get:
+      consumes:
+      - application/json
+      description: Compare changes between two game versions including buffs, nerfs,
+        and new features
+      parameters:
+      - description: From version (e.g., 13.23.1)
+        in: path
+        name: fromVersion
+        required: true
+        type: string
+      - description: To version (e.g., 13.24.1)
+        in: path
+        name: toVersion
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Patch changes comparison
+          schema:
+            $ref: '#/definitions/modules_signal_infra_http.PatchChangesResponse'
+        "400":
+          description: Version parameters are required
+          schema:
+            type: string
+        "500":
+          description: Internal server error
+          schema:
+            type: string
+      summary: Get patch changes between versions
+      tags:
+      - riot
+  /v1/signal/riot/patch-notes/{fromVersion}/{toVersion}:
+    get:
+      consumes:
+      - application/json
+      description: Compare changes between two game versions including new/removed
+        champions and modifications
+      parameters:
+      - description: From version (e.g., 13.23.1)
+        in: path
+        name: fromVersion
+        required: true
+        type: string
+      - description: To version (e.g., 13.24.1)
+        in: path
+        name: toVersion
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Patch notes comparison
+          schema:
+            $ref: '#/definitions/modules_signal_infra_http.PatchNotesResponse'
+        "400":
+          description: Version parameters are required
+          schema:
+            type: string
+        "500":
+          description: Internal server error
+          schema:
+            type: string
+      summary: Get patch notes and changes between versions
+      tags:
+      - riot
+  /v1/signal/riot/patches/{version}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve detailed information about a specific game patch
+      parameters:
+      - description: Patch version (e.g., 13.24.1)
+        in: path
+        name: version
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Patch information
+          schema:
+            $ref: '#/definitions/modules_signal_infra_http.PatchInfoResponse'
+        "400":
+          description: Version parameter is required
+          schema:
+            type: string
+        "404":
+          description: Patch not found
+          schema:
+            type: string
+      summary: Get detailed patch information
+      tags:
+      - riot
+  /v1/signal/riot/pro-leagues:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve detailed information about all major professional leagues
+        (LEC, LCK, LPL, etc.)
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Professional leagues information
+          schema:
+            $ref: '#/definitions/modules_signal_infra_http.ProfessionalLeaguesResponse'
+        "500":
+          description: Internal server error
+          schema:
+            type: string
+      summary: Get professional League of Legends leagues information
+      tags:
+      - riot
+  /v1/signal/riot/pro-leagues/{league}/champions:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve detailed champion statistics including pick rates, win
+        rates, and ban rates for a specific professional league
+      parameters:
+      - description: League code (e.g., LEC, LCK, LPL, LTA)
+        in: path
+        name: league
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: League champion statistics
+          schema:
+            $ref: '#/definitions/modules_signal_infra_http.LeagueChampionsResponse'
+        "400":
+          description: Invalid league parameter
+          schema:
+            type: string
+        "500":
+          description: Internal server error
+          schema:
+            type: string
+      summary: Get champion statistics for a professional league
+      tags:
+      - riot
+  /v1/signal/riot/regions:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve list of all available regions for League of Legends
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of available regions
+          schema:
+            $ref: '#/definitions/modules_signal_infra_http.RegionsResponse'
+        "500":
+          description: Internal server error
+          schema:
+            type: string
+      summary: Get available League of Legends regions
+      tags:
+      - riot
+  /v1/signal/riot/runes/{version}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve detailed information about all runes for a specific game
+        version from Data Dragon
+      parameters:
+      - description: Game version (e.g., 13.24.1)
+        in: path
+        name: version
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Runes data
+          schema:
+            $ref: '#/definitions/modules_signal_infra_http.RunesResponse'
+        "400":
+          description: Version parameter is required
+          schema:
+            type: string
+        "500":
+          description: Internal server error
+          schema:
+            type: string
+      summary: Get runes data for a specific version
+      tags:
+      - riot
+  /v1/signal/riot/summoner-spells/{version}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve detailed information about all summoner spells for a specific
+        game version from Data Dragon
+      parameters:
+      - description: Game version (e.g., 13.24.1)
+        in: path
+        name: version
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Summoner spells data
+          schema:
+            $ref: '#/definitions/modules_signal_infra_http.SummonerSpellsResponse'
+        "400":
+          description: Version parameter is required
+          schema:
+            type: string
+        "500":
+          description: Internal server error
+          schema:
+            type: string
+      summary: Get summoner spells data for a specific version
+      tags:
+      - riot
+  /v1/signal/riot/sync/patches:
+    post:
+      consumes:
+      - application/json
+      description: Sync latest patch information from Riot Games Data Dragon API
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Synchronization result
+          schema:
+            $ref: '#/definitions/modules_signal_infra_http.SyncPatchesResponse'
+        "500":
+          description: Internal server error
+          schema:
+            type: string
+      summary: Synchronize game patches from Riot Games
+      tags:
+      - riot
+  /v1/signal/riot/versions:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve list of all available League of Legends game versions
+        from Data Dragon
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of game versions
+          schema:
+            $ref: '#/definitions/modules_signal_infra_http.GameVersionsResponse'
+        "500":
+          description: Internal server error
+          schema:
+            type: string
+      summary: Get available game versions
+      tags:
+      - riot
 schemes:
 - https
 - http
