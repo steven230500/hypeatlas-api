@@ -13,7 +13,7 @@ HypeAtlas is a comprehensive API platform that provides real-time meta-game anal
 ### 🎮 League of Legends Integration
 - **Champion-V3 API**: Weekly free champion rotation data
 - **League-V4 API**: Challenger league statistics and rankings
-- **Data Dragon API**: Complete static game data (champions, items, runes, summoner spells)
+- **Data Dragon API**: Complete static game ∏data (champions, items, runes, summoner spells)
 - **Champion Mastery-V4**: Player mastery statistics and progression
 - **Rate Limiting**: Built-in rate limiter (18 req/s, 95 req/min) with automatic retry
 - **Patch Comparison**: Automatic detection of changes between game versions
@@ -56,10 +56,11 @@ HypeAtlas is a comprehensive API platform that provides real-time meta-game anal
 
 ### Data Dragon API (Static Game Data)
 - `GET /v1/signal/riot/versions` - Get available game versions
+- `GET /v1/signal/riot/champions/{version}/list` - Get complete list of all champions
+- `GET /v1/signal/riot/champions/{version}/{championID}` - Get detailed champion information
 - `GET /v1/signal/riot/items/{version}` - Get items data for specific version
 - `GET /v1/signal/riot/runes/{version}` - Get runes data for specific version
 - `GET /v1/signal/riot/summoner-spells/{version}` - Get summoner spells data
-- `GET /v1/signal/riot/champions/{version}/{championID}` - Get detailed champion information
 - `GET /v1/signal/riot/patch-notes/{fromVersion}/{toVersion}` - Compare changes between patches
 
 ### Data Dragon Images API
@@ -136,6 +137,12 @@ curl -s "http://localhost:8080/v1/hypemap/live?game=lol&limit=10" | jq .
 **Get Game Versions:**
 ```bash
 curl -s "http://localhost:8080/v1/signal/riot/versions" | jq .
+```
+
+**Get All Champions List:**
+```bash
+curl -s "http://localhost:8080/v1/signal/riot/champions/15.18.1/list" | jq '.total'
+# Returns: 168 (total champions)
 ```
 
 **Get Champion Details:**

@@ -15,8 +15,8 @@ import (
 func NewRouter(repo out.Repository) chi.Router {
 	r := chi.NewRouter()
 
-	// Servicio principal del módulo
-	signalSvc := service.New(repo)
+	// Servicio principal del módulo (se inicializa después de riotSvc para inyectarlo)
+	// signalSvc := service.New(repo) // MOVIDO ABAJO
 
 	// Cliente de Riot (condicional por env)
 	riotAPIKey := os.Getenv("RIOT_API_KEY")
@@ -33,6 +33,7 @@ func NewRouter(repo out.Repository) chi.Router {
 	}
 
 	// Handlers principales (sin prefijos internos)
+	signalSvc := service.New(repo, riotSvc)
 	signalHandler := New(signalSvc)
 	signalHandler.Register(r)
 

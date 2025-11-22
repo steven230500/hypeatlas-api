@@ -14,4 +14,8 @@ type Service interface {
 	// Leagues & Comps
 	ListLeagues(ctx context.Context, game, region string) ([]entities.League, error)
 	ListComps(ctx context.Context, game, region, league, patch, mapp, side string, limit int) ([]entities.Comp, error)
+
+	// Riot Data
+	ListChampions(ctx context.Context, version string) ([]entities.Champion, error)
+	ListRegions(ctx context.Context) ([]string, error)
 }

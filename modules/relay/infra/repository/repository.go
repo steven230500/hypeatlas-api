@@ -2,7 +2,6 @@ package repository
 
 import (
 	"context"
-	"log"
 	"time"
 
 	"github.com/steven230500/hypeatlas-api/domain/entities"
@@ -35,103 +34,84 @@ func (r *Repo) FindLiveByEvent(ctx context.Context, eventSlug, lang string) ([]e
 
 func (r *Repo) HypeMapLive(ctx context.Context, game, lang string, limit, offset int) ([]entities.HypeMapItem, error) {
 	var items []entities.HypeMapItem
-	// Query compleja para hype map live - simplificada
-	query := `
-SELECT
-  e.slug as event_slug,
-  e.title as event_title,
-  e.game,
-  e.league,
-  c.platform,
-  cr.handle,
-  c.lang,
-  c.country,
-  c.viewers,
-  c.is_live,
-  c.viewers as score
-FROM app.co_streams c
-JOIN app.events e ON e.uuid = c.event_uuid
-JOIN app.creators cr ON cr.uuid = c.creator_uuid
-WHERE c.is_live = true
-`
-	// Construir parámetros dinámicamente
-	var params []interface{}
-	if game != "" {
-		query += " AND e.game = ?"
-		params = append(params, game)
-	}
-	if lang != "" {
-		query += " AND c.lang = ?"
-		params = append(params, lang)
-	}
-	query += " ORDER BY c.viewers DESC"
 
-	// Asegurar valores por defecto para limit y offset
+	// Asegurar valores por defecto
 	if limit <= 0 {
 		limit = 50
 	}
 	if offset < 0 {
 		offset = 0
 	}
-	query += " LIMIT ? OFFSET ?"
-	params = append(params, limit, offset)
 
-	// Debug: imprimir la consulta
-	log.Printf("DEBUG HypeMapLive query: %s", query)
-	log.Printf("DEBUG HypeMapLive params: %v", params)
+	query := r.db.WithContext(ctx).
+		Table("app.co_streams c").
+		Select(`
+			e.slug as event_slug,
+			e.title as event_title,
+			e.game,
+			e.league,
+			c.platform,
+			cr.handle,
+			c.lang,
+			c.country,
+			c.viewers,
+			c.is_live,
+			c.viewers as score
+		`).
+		Joins("JOIN app.events e ON e.uuid = c.event_uuid").
+		Joins("JOIN app.creators cr ON cr.uuid = c.creator_uuid").
+		Where("c.is_live = ?", true)
 
-	result := db.Call(r.db.WithContext(ctx).Raw(query, params...).Scan(&items))
-
-	// Debug: imprimir resultados
-	log.Printf("DEBUG HypeMapLive result error: %v", result.Error)
-	log.Printf("DEBUG HypeMapLive items count: %d", len(items))
-	if len(items) > 0 {
-		log.Printf("DEBUG HypeMapLive first item: %+v", items[0])
+	if game != "" {
+		query = query.Where("e.game = ?", game)
+	}
+	if lang != "" {
+		query = query.Where("c.lang = ?", lang)
 	}
 
+	result := db.Call(query.Order("c.viewers DESC").Limit(limit).Offset(offset).Scan(&items))
 	return items, result.Error
 }
 
 func (r *Repo) HypeMapSummary(ctx context.Context, game, lang string, limit, offset int) ([]entities.HypeMapSummaryItem, error) {
 	var items []entities.HypeMapSummaryItem
-	// Query para resumen por evento
-	query := `
-SELECT
-  e.slug as event_slug,
-  e.title as event_title,
-  e.game,
-  e.league,
-  COUNT(c.uuid) as streamers,
-  SUM(c.viewers) as total_viewers,
-  MAX(c.last_seen_at) as last_seen_at
-FROM app.co_streams c
-JOIN app.events e ON e.uuid = c.event_uuid
-JOIN app.creators cr ON cr.uuid = c.creator_uuid
-WHERE c.is_live = true
-`
-	// Construir parámetros dinámicamente
-	var params []interface{}
-	if game != "" {
-		query += " AND e.game = ?"
-		params = append(params, game)
-	}
-	if lang != "" {
-		query += " AND c.lang = ?"
-		params = append(params, lang)
-	}
-	query += " GROUP BY e.uuid, e.slug, e.title, e.game, e.league ORDER BY total_viewers DESC"
 
-	// Asegurar valores por defecto para limit y offset
+	// Asegurar valores por defecto
 	if limit <= 0 {
 		limit = 20
 	}
 	if offset < 0 {
 		offset = 0
 	}
-	query += " LIMIT ? OFFSET ?"
-	params = append(params, limit, offset)
 
-	result := db.Call(r.db.WithContext(ctx).Raw(query, params...).Scan(&items))
+	query := r.db.WithContext(ctx).
+		Table("app.co_streams c").
+		Select(`
+			e.slug as event_slug,
+			e.title as event_title,
+			e.game,
+			e.league,
+			COUNT(c.uuid) as streamers,
+			SUM(c.viewers) as total_viewers,
+			MAX(c.last_seen_at) as last_seen_at
+		`).
+		Joins("JOIN app.events e ON e.uuid = c.event_uuid").
+		Joins("JOIN app.creators cr ON cr.uuid = c.creator_uuid").
+		Where("c.is_live = ?", true)
+
+	if game != "" {
+		query = query.Where("e.game = ?", game)
+	}
+	if lang != "" {
+		query = query.Where("c.lang = ?", lang)
+	}
+
+	query = query.Group("e.uuid, e.slug, e.title, e.game, e.league").
+		Order("total_viewers DESC").
+		Limit(limit).
+		Offset(offset)
+
+	result := db.Call(query.Scan(&items))
 	return items, result.Error
 }
 

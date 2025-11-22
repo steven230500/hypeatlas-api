@@ -56,10 +56,11 @@ func (h *RiotHandler) Register(r chi.Router) {
 
 		// Data Dragon endpoints
 		r.Get("/versions", h.getGameVersions)
+		r.Get("/champions/{version}/list", h.getChampionsList)
+		r.Get("/champions/{version}/{championID}", h.getChampionDetails)
 		r.Get("/items/{version}", h.getItems)
 		r.Get("/runes/{version}", h.getRunes)
 		r.Get("/summoner-spells/{version}", h.getSummonerSpells)
-		r.Get("/champions/{version}/{championID}", h.getChampionDetails)
 		r.Get("/patch-notes/{fromVersion}/{toVersion}", h.getPatchNotes)
 
 		// Image endpoints
@@ -451,6 +452,57 @@ func (h *RiotHandler) getGameVersions(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	_ = json.NewEncoder(w).Encode(GameVersionsResponse{Success: true, Versions: versions})
+}
+
+type ChampionsListResponse struct {
+	Success   bool                     `json:"success"`
+	Version   string                   `json:"version"`
+	Total     int                      `json:"total"`
+	Champions []map[string]interface{} `json:"champions"`
+}
+
+// @Summary Get list of all champions
+// @Description Retrieve a complete list of all League of Legends champions for a specific game version from Data Dragon
+// @Tags riot
+// @Accept json
+// @Produce json
+// @Param version path string true "Game version (e.g., 13.24.1)"
+// @Success 200 {object} ChampionsListResponse "List of all champions"
+// @Failure 400 {string} string "Version parameter is required"
+// @Failure 500 {string} string "Internal server error"
+// @Router /v1/signal/riot/champions/{version}/list [get]
+func (h *RiotHandler) getChampionsList(w http.ResponseWriter, r *http.Request) {
+	version := chi.URLParam(r, "version")
+	if version == "" {
+		http.Error(w, "Version parameter is required", http.StatusBadRequest)
+		return
+	}
+
+	champions, err := h.riotSvc.GetChampions(r.Context(), version)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Error getting champions list: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	// Convertir el mapa de campeones a una lista
+	championsList := make([]map[string]interface{}, 0, len(champions.Data))
+	for _, champion := range champions.Data {
+		championInfo := map[string]interface{}{
+			"id":    champion.ID,
+			"key":   champion.Key,
+			"name":  champion.Name,
+			"title": champion.Title,
+		}
+		championsList = append(championsList, championInfo)
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(w).Encode(ChampionsListResponse{
+		Success:   true,
+		Version:   version,
+		Total:     len(championsList),
+		Champions: championsList,
+	})
 }
 
 type ItemsResponse struct {

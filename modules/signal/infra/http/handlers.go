@@ -20,6 +20,8 @@ func (h *Handler) Register(r chi.Router) {
 	r.Get("/changes", h.changes)
 	r.Get("/leagues", h.leagues)
 	r.Get("/comps", h.comps)
+	r.Get("/champions", h.champions)
+	r.Get("/regions", h.regions)
 }
 
 // ====== Wrappers de respuesta para Swagger ======

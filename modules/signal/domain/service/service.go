@@ -7,11 +7,20 @@ import (
 	"github.com/steven230500/hypeatlas-api/domain/entities"
 	in "github.com/steven230500/hypeatlas-api/modules/signal/domain/ports/in"
 	out "github.com/steven230500/hypeatlas-api/modules/signal/domain/ports/out"
+	"github.com/steven230500/hypeatlas-api/providers/riot"
 )
 
-type svc struct{ repo out.Repository }
+type svc struct {
+	repo    out.Repository
+	riotSvc *riot.Service
+}
 
-func New(r out.Repository) in.Service { return &svc{repo: r} }
+func New(r out.Repository, riotSvc *riot.Service) in.Service {
+	return &svc{
+		repo:    r,
+		riotSvc: riotSvc,
+	}
+}
 
 func (s *svc) ListPatches(ctx context.Context, game string) ([]entities.Patch, error) {
 	if game == "" {

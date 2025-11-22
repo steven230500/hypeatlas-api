@@ -6,7 +6,9 @@ import (
 	"github.com/steven230500/hypeatlas-api/domain/entities"
 	out "github.com/steven230500/hypeatlas-api/modules/signal/domain/ports/out"
 	"github.com/steven230500/hypeatlas-api/shared/db"
+	"gorm.io/datatypes"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 type Repo struct{ db *gorm.DB }
@@ -68,20 +70,27 @@ func (r *Repo) UpsertComp(
 	slotsJSON string, // JSON en texto
 	pickRate, winRate, deltaWin *float64, // pueden ser nil
 ) error {
-	// language=SQL
-	const q = `
-INSERT INTO app.comps
-  (game, region, league, patch, map, side, slots, pick_rate, win_rate, delta_win)
-VALUES (?, ?, ?, ?, ?, ?, ?::jsonb, ?, ?, ?)
-ON CONFLICT (game, region, league, patch, map, side, slots_fp)
-DO UPDATE SET
-  pick_rate  = EXCLUDED.pick_rate,
-  win_rate   = EXCLUDED.win_rate,
-  delta_win  = EXCLUDED.delta_win,
-  updated_at = now();
-`
-	result := db.Call(r.db.WithContext(ctx).Exec(q,
-		game, region, league, patch, mapp, side, slotsJSON, pickRate, winRate, deltaWin,
-	))
+	comp := entities.Comp{
+		Game:     game,
+		Region:   region,
+		League:   league,
+		Patch:    patch,
+		Map:      mapp,
+		Side:     side,
+		Slots:    datatypes.JSON([]byte(slotsJSON)),
+		PickRate: pickRate,
+		WinRate:  winRate,
+		DeltaWin: deltaWin,
+	}
+
+	result := db.Call(r.db.WithContext(ctx).Clauses(clause.OnConflict{
+		Columns: []clause.Column{
+			{Name: "game"}, {Name: "region"}, {Name: "league"},
+			{Name: "patch"}, {Name: "map"}, {Name: "side"},
+			{Name: "slots_fp"},
+		},
+		DoUpdates: clause.AssignmentColumns([]string{"pick_rate", "win_rate", "delta_win", "updated_at"}),
+	}).Create(&comp))
+
 	return result.Error
 }
