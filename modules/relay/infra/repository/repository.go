@@ -32,6 +32,70 @@ func (r *Repo) FindLiveByEvent(ctx context.Context, eventSlug, lang string) ([]e
 	return coStreams, result.Error
 }
 
+// FindEvents lista eventos con filtros opcionales
+func (r *Repo) FindEvents(ctx context.Context, filters map[string]interface{}, limit, offset int) ([]entities.Event, int, error) {
+	var events []entities.Event
+	var total int64
+
+	query := r.db.WithContext(ctx).Model(&entities.Event{})
+
+	// Aplicar filtros
+	if game, ok := filters["game"].(string); ok && game != "" {
+		query = query.Where("game = ?", game)
+	}
+	if league, ok := filters["league"].(string); ok && league != "" {
+		query = query.Where("league = ?", league)
+	}
+	if status, ok := filters["status"].(string); ok && status != "" {
+		now := time.Now()
+		switch status {
+		case "upcoming":
+			query = query.Where("starts_at > ?", now)
+		case "live":
+			query = query.Where("starts_at <= ? AND (ends_at IS NULL OR ends_at >= ?)", now, now)
+		case "past":
+			query = query.Where("ends_at < ?", now)
+		}
+	}
+
+	// Contar total
+	if err := db.Call(query.Count(&total)).Error; err != nil {
+		return nil, 0, err
+	}
+
+	// Obtener eventos con paginación
+	if err := db.Call(query.Order("starts_at DESC").Limit(limit).Offset(offset).Find(&events)).Error; err != nil {
+		return nil, 0, err
+	}
+
+	return events, int(total), nil
+}
+
+// FindEventBySlug obtiene un evento por su slug
+func (r *Repo) FindEventBySlug(ctx context.Context, slug string) (*entities.Event, error) {
+	var event entities.Event
+	result := db.Call(r.db.WithContext(ctx).Where("slug = ?", slug).First(&event))
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return &event, nil
+}
+
+// CreateEvent crea un nuevo evento
+func (r *Repo) CreateEvent(ctx context.Context, event *entities.Event) error {
+	return db.Call(r.db.WithContext(ctx).Create(event)).Error
+}
+
+// UpdateEvent actualiza un evento existente
+func (r *Repo) UpdateEvent(ctx context.Context, slug string, updates map[string]interface{}) error {
+	return db.Call(r.db.WithContext(ctx).Model(&entities.Event{}).Where("slug = ?", slug).Updates(updates)).Error
+}
+
+// DeleteEvent elimina un evento (hard delete)
+func (r *Repo) DeleteEvent(ctx context.Context, slug string) error {
+	return db.Call(r.db.WithContext(ctx).Where("slug = ?", slug).Delete(&entities.Event{})).Error
+}
+
 func (r *Repo) HypeMapLive(ctx context.Context, game, lang string, limit, offset int) ([]entities.HypeMapItem, error) {
 	var items []entities.HypeMapItem
 

@@ -114,6 +114,8 @@ func main() {
 	v1 := chi.NewRouter()
 	relayHandler.Register(v1)
 	hypeMapHandler.Register(v1)
+	eventHandler := relayhttp.NewEventHandler(relayService)
+	eventHandler.Register(v1)
 
 	// ⬇️ Prefijo final: /v1/signal/...
 	v1.Mount("/signal", signalRouter)
