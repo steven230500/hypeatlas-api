@@ -25,6 +25,11 @@ func NewService(apiKey string, repo out.Repository) *Service {
 	}
 }
 
+// GetClient devuelve el cliente de Riot Games para uso en servicios especializados
+func (s *Service) GetClient() *Client {
+	return s.client
+}
+
 // SyncPatches sincroniza los parches desde Riot Games API
 func (s *Service) SyncPatches(ctx context.Context) error {
 	log.Println("Starting Riot Games patch synchronization...")

@@ -4,6 +4,10 @@
 *.out
 *.test
 
+# Compiled binaries
+/api
+/worker
+
 # macOS
 .DS_Store
 

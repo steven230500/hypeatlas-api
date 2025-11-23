@@ -11,6 +11,7 @@ import (
 	in "github.com/steven230500/hypeatlas-api/modules/signal/domain/ports/in"
 	"github.com/steven230500/hypeatlas-api/modules/signal/domain/service"
 	"github.com/steven230500/hypeatlas-api/providers/riot"
+	sharedhttp "github.com/steven230500/hypeatlas-api/shared/http"
 )
 
 type RiotHandler struct {
@@ -24,18 +25,20 @@ type RiotHandler struct {
 }
 
 func NewRiotHandler(riotSvc *riot.Service, sigSvc in.Service, metaGameSvc *service.MetaGameService) *RiotHandler {
-	// Crear cliente temporal para los servicios especializados
-	// En una implementación más robusta, el cliente debería ser inyectado
-	tempClient := riot.NewClient("temp-key") // Esto será reemplazado por el cliente real del servicio
+	// Cliente autenticado para servicios que requieren API key (Riot API)
+	authenticatedClient := riotSvc.GetClient()
+	
+	// Cliente sin autenticación para Data Dragon (no requiere API key)
+	unauthenticatedClient := riot.NewClient("")
 
 	return &RiotHandler{
 		riotSvc:               riotSvc,
 		sigSvc:                sigSvc,
 		metaGameSvc:           metaGameSvc,
-		championStatsSvc:      riot.NewChampionStatsService(tempClient),
-		professionalLeagueSvc: riot.NewProfessionalLeagueService(tempClient),
-		dataDragonSvc:         riot.NewDataDragonService(tempClient),
-		imageSvc:              riot.NewImageService(tempClient),
+		championStatsSvc:      riot.NewChampionStatsService(authenticatedClient),      // Requiere API key
+		professionalLeagueSvc: riot.NewProfessionalLeagueService(authenticatedClient), // Requiere API key
+		dataDragonSvc:         riot.NewDataDragonService(unauthenticatedClient),       // NO requiere API key
+		imageSvc:              riot.NewImageService(unauthenticatedClient),            // NO requiere API key
 	}
 }
 
@@ -440,7 +443,9 @@ type GameVersionsResponse struct {
 // @Tags riot
 // @Accept json
 // @Produce json
-// @Success 200 {object} GameVersionsResponse "List of game versions"
+// @Param limit query int false "Number of items per page (default: 20, max: 100)"
+// @Param offset query int false "Number of items to skip (default: 0)"
+// @Success 200 {object} sharedhttp.PaginatedResponse "List of game versions with pagination"
 // @Failure 500 {string} string "Internal server error"
 // @Router /v1/signal/riot/versions [get]
 func (h *RiotHandler) getGameVersions(w http.ResponseWriter, r *http.Request) {
@@ -450,8 +455,15 @@ func (h *RiotHandler) getGameVersions(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Aplicar paginación
+	params := sharedhttp.ParsePaginationParams(r)
+	paginatedVersions, meta := sharedhttp.ApplyPagination(versions, params)
+
 	w.Header().Set("Content-Type", "application/json")
-	_ = json.NewEncoder(w).Encode(GameVersionsResponse{Success: true, Versions: versions})
+	_ = json.NewEncoder(w).Encode(sharedhttp.PaginatedResponse{
+		Items:      paginatedVersions,
+		Pagination: meta,
+	})
 }
 
 type ChampionsListResponse struct {
