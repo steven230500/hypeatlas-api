@@ -1,82 +1,94 @@
-# HypeAtlas API – League of Legends Meta-Game Analysis Platform
+# HypeAtlas API – Esports Analytics & Live Streaming Intelligence Platform
 
-HypeAtlas is a comprehensive API platform that provides real-time meta-game analysis for League of Legends, combining live streaming data with Riot Games API integration. The platform offers intelligent insights into champion rotations, league rankings, and strategic recommendations powered by data analysis.
+HypeAtlas is a comprehensive API platform that provides real-time analytics for League of Legends and Valorant esports, combining live streaming data with Riot Games API integration. The platform offers intelligent insights into meta-game analysis, event management, and live viewership tracking.
 
 ## 🚀 Features
 
-### 🔥 Meta-Game Analysis System
-- **Champion Rotation Analysis**: Detailed analysis of weekly free champion rotations with tier classification
-- **League Rankings Intelligence**: Statistical analysis of Challenger league data including win rates and LP distribution
-- **Strategic Recommendations**: AI-powered suggestions based on free champion availability
-- **Real-time Data Integration**: Live data from Riot Games APIs with automatic synchronization
+### 🎮 **Signal Module** - Meta-Game Intelligence
 
-### 🎮 League of Legends Integration
-- **Champion-V3 API**: Weekly free champion rotation data
-- **League-V4 API**: Challenger league statistics and rankings
-- **Data Dragon API**: Complete static game ∏data (champions, items, runes, summoner spells)
-- **Champion Mastery-V4**: Player mastery statistics and progression
-- **Rate Limiting**: Built-in rate limiter (18 req/s, 95 req/min) with automatic retry
-- **Patch Comparison**: Automatic detection of changes between game versions
+- **Champion Data**: Complete champion database with stats, abilities, and images
+- **Patch Analysis**: Track changes between game versions
+- **Meta-Game Reports**: AI-powered meta analysis with champion rotations
+- **League Rankings**: Challenger league statistics and player data
+- **Data Dragon Integration**: Full access to Riot's static game data
+- **Pagination Support**: Efficient data retrieval with limit/offset
 
-### 📊 Advanced Analytics
-- **Impact Scoring**: Algorithm to calculate meta impact of champion rotations
-- **Probability Calculations**: Meta shift probability based on free champion tiers
-- **Role Analysis**: Detection of role concentrations in free champion pools
-- **Performance Metrics**: Pick rates, win rates, and ban rate analysis
+### 🔥 **Relay Module** - Live Streaming & Events
 
-### 🎯 Data Dragon Integration
-- **Complete Champion Database**: Full champion statistics, abilities, and lore
-- **Item System**: Comprehensive item data with builds and recipes
-- **Rune Pages**: All rune trees and keystone combinations
-- **Summoner Spells**: Complete spell database with cooldowns and effects
-- **Patch Comparison**: Automatic change detection between game versions
-- **Real-time Updates**: Always up-to-date with latest game data
+- **Event Management**: Complete CRUD operations for esports events
+- **Live Co-Streams**: Track streamers broadcasting esports events
+- **HypeMap**: Real-time viewership rankings across platforms
+- **Event Filtering**: Filter by game, league, and status (upcoming/live/past)
+- **Viewership Analytics**: Aggregate viewer counts and trending events
+
+### 📊 **Advanced Features**
+
+- **Pagination**: Consistent pagination across all list endpoints
+- **Real-time Data**: Live updates from Riot APIs and streaming platforms
+- **Rate Limiting**: Built-in rate limiter with automatic retry
+- **Swagger Documentation**: Auto-generated API docs at `/docs`
+- **CI/CD Pipeline**: Automated testing and deployment
+
+---
 
 ## 🌐 API Endpoints
 
-### Meta-Game Analysis
-- `GET /v1/signal/riot/metagame/rotation/{platform}` - Analyze weekly champion rotation
-- `GET /v1/signal/riot/metagame/league/{platform}/{queue}` - Analyze league rankings
-- `GET /v1/signal/riot/metagame/report/{platform}` - Generate comprehensive meta report
+### **Signal Module** - Game Data & Meta-Game
 
-### Data Synchronization
-- `POST /v1/signal/riot/sync/patches` - Synchronize patch data from Riot
-- `GET /v1/signal/riot/patches/{version}` - Get detailed patch information
+#### Champion & Game Data
 
-### Live Streaming Data
-- `GET /v1/hypemap/live` - Live co-streaming rankings
-- `GET /v1/hypemap/summary` - Event summary with aggregated data
-- `GET /v1/relay/costreams` - Co-streaming data by event
-
-### Game Data
+- `GET /v1/signal/champions?version={version}` - List all champions (paginated)
+- `GET /v1/signal/regions` - List available regions (paginated)
+- `GET /v1/signal/patches` - List game patches
 - `GET /v1/signal/changes` - Patch change history
 - `GET /v1/signal/comps` - Champion composition analysis
 - `GET /v1/signal/leagues` - League information
-- `GET /v1/signal/patches` - Available patches
 
-### Data Dragon API (Static Game Data)
-- `GET /v1/signal/riot/versions` - Get available game versions
-- `GET /v1/signal/riot/champions/{version}/list` - Get complete list of all champions
-- `GET /v1/signal/riot/champions/{version}/{championID}` - Get detailed champion information
-- `GET /v1/signal/riot/items/{version}` - Get items data for specific version
-- `GET /v1/signal/riot/runes/{version}` - Get runes data for specific version
-- `GET /v1/signal/riot/summoner-spells/{version}` - Get summoner spells data
-- `GET /v1/signal/riot/patch-notes/{fromVersion}/{toVersion}` - Compare changes between patches
+#### Riot API Integration
 
-### Data Dragon Images API
-- `GET /v1/signal/riot/images/champions/{version}/{championID}` - Get champion image URLs (icon, splash, loading, tile)
-- `GET /v1/signal/riot/images/champions/{version}/{championID}/{skinNum}` - Get champion skin image URLs
-- `GET /v1/signal/riot/images/items/{version}/{itemID}` - Get item image URL
-- `GET /v1/signal/riot/images/spells/{version}/{spellName}` - Get summoner spell image URL
-- `GET /v1/signal/riot/images/runes/{runeIcon}` - Get rune image URL
-- `GET /v1/signal/riot/images/profile-icons/{version}/{iconID}` - Get profile icon image URL
-- `GET /v1/signal/riot/images/maps/{version}/{mapID}` - Get map image URL
-- `GET /v1/signal/riot/images/abilities/{version}/{abilityName}` - Get champion ability image URL
-- `GET /v1/signal/riot/images/passives/{version}/{passiveFile}` - Get champion passive image URL
+- `GET /v1/signal/riot/versions` - Available game versions (paginated, 480+ versions)
+- `GET /v1/signal/riot/champions/{version}/list` - Complete champion list
+- `GET /v1/signal/riot/champions/{version}/{championID}` - Champion details
+- `GET /v1/signal/riot/items/{version}` - Items data
+- `GET /v1/signal/riot/runes/{version}` - Runes data
+- `GET /v1/signal/riot/summoner-spells/{version}` - Summoner spells
+- `GET /v1/signal/riot/patch-notes/{fromVersion}/{toVersion}` - Compare patches
+
+#### Meta-Game Analysis
+
+- `GET /v1/signal/riot/metagame/rotation/{platform}` - Champion rotation analysis
+- `GET /v1/signal/riot/metagame/league/{platform}/{queue}` - League rankings analysis
+- `GET /v1/signal/riot/metagame/report/{platform}` - Comprehensive meta report
+
+#### Image URLs
+
+- `GET /v1/signal/riot/images/champions/{version}/{championID}` - Champion images
+- `GET /v1/signal/riot/images/items/{version}/{itemID}` - Item images
+- `GET /v1/signal/riot/images/spells/{version}/{spellName}` - Spell images
+- `GET /v1/signal/riot/images/runes/{runeIcon}` - Rune images
+
+### **Relay Module** - Events & Live Streaming
+
+#### Event Management
+
+- `GET /v1/relay/events/` - List events (filter by game, league, status)
+- `GET /v1/relay/events/{slug}` - Get event details
+- `POST /v1/relay/events/` - Create event
+- `PUT /v1/relay/events/{slug}` - Update event
+- `DELETE /v1/relay/events/{slug}` - Delete event
+
+#### Live Streaming
+
+- `GET /v1/relay/costreams?event_id={slug}&lang={lang}` - Co-streams for an event
+- `GET /v1/hypemap/live?game={game}&lang={lang}` - Live viewership rankings
+- `GET /v1/hypemap/summary?game={game}&lang={lang}` - Event summary with totals
+
+---
 
 ## 🛠 Installation & Setup
 
 ### Prerequisites
+
 - Docker & Docker Compose
 - PostgreSQL (via Docker)
 - Riot Games API Key
@@ -84,146 +96,129 @@ HypeAtlas is a comprehensive API platform that provides real-time meta-game anal
 ### Quick Start
 
 1. **Clone the repository**
+
 ```bash
 git clone <repository-url>
 cd hypeatlas-api
 ```
 
 2. **Configure environment**
+
 ```bash
 cp .env.example .env
-# Edit .env with your configuration
+# Edit .env with your Riot API key
 ```
 
-3. **Set up Riot Games API Key**
-```bash
-# Add to your .env file
-RIOT_API_KEY=RGAPI-xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
-```
+3. **Start the platform**
 
-4. **Start the platform**
 ```bash
 docker-compose up --build
 ```
 
 The API will be available at `http://localhost:8080`
 
-## 📚 Documentation
+---
 
-### API Documentation
-- **Swagger UI**: http://localhost:8080/docs
-- **OpenAPI Spec**: http://localhost:8080/openapi.yaml
-- **Health Check**: http://localhost:8080/healthz
+## 📚 API Documentation
 
-### Example Requests
+- **Swagger UI**: https://api.hypeatlas.app/docs
+- **OpenAPI Spec**: https://api.hypeatlas.app/openapi.json
+- **Health Check**: https://api.hypeatlas.app/healthz
 
-#### Champion Rotation Analysis
+---
+
+## 💡 Example Requests
+
+### Pagination Examples
+
 ```bash
-curl -s "http://localhost:8080/v1/signal/riot/metagame/rotation/na1" | jq .
+# Get first 20 game versions
+curl "https://api.hypeatlas.app/v1/signal/riot/versions?limit=20&offset=0"
+
+# Get champions with pagination
+curl "https://api.hypeatlas.app/v1/signal/champions?version=14.14.1&limit=10"
 ```
 
-#### League Rankings Analysis
+### Event Management
+
 ```bash
-curl -s "http://localhost:8080/v1/signal/riot/metagame/league/na1/RANKED_SOLO_5x5" | jq .
+# List all events
+curl "https://api.hypeatlas.app/v1/relay/events/"
+
+# Filter live events
+curl "https://api.hypeatlas.app/v1/relay/events/?status=live&game=val"
+
+# Get specific event
+curl "https://api.hypeatlas.app/v1/relay/events/vct-emea-final"
 ```
 
-#### Live Streaming Data
+### Live Streaming Data
+
 ```bash
-curl -s "http://localhost:8080/v1/hypemap/live?game=lol&limit=10" | jq .
+# Live viewership rankings
+curl "https://api.hypeatlas.app/v1/hypemap/live?game=val&limit=10"
+
+# Event summary
+curl "https://api.hypeatlas.app/v1/hypemap/summary?game=lol"
 ```
 
-#### Data Dragon API Examples
+### Champion Data
 
-**Get Game Versions:**
 ```bash
-curl -s "http://localhost:8080/v1/signal/riot/versions" | jq .
+# Get all champions for a version
+curl "https://api.hypeatlas.app/v1/signal/champions?version=14.14.1"
+
+# Get champion images
+curl "https://api.hypeatlas.app/v1/signal/riot/images/champions/14.14.1/Ahri"
 ```
 
-**Get All Champions List:**
-```bash
-curl -s "http://localhost:8080/v1/signal/riot/champions/15.18.1/list" | jq '.total'
-# Returns: 168 (total champions)
-```
-
-**Get Champion Details:**
-```bash
-curl -s "http://localhost:8080/v1/signal/riot/champions/15.18.1/Ahri" | jq .
-```
-
-**Get Items Data:**
-```bash
-curl -s "http://localhost:8080/v1/signal/riot/items/15.18.1" | jq '.data | keys | length'
-```
-
-**Compare Patch Changes:**
-```bash
-curl -s "http://localhost:8080/v1/signal/riot/patch-notes/15.17.1/15.18.1" | jq .
-```
-
-#### Data Dragon Images API Examples
-
-**Get Champion Images (all types):**
-```bash
-curl -s "http://localhost:8080/v1/signal/riot/images/champions/15.18.1/Ahri" | jq .
-```
-
-**Get Champion Skin Images:**
-```bash
-curl -s "http://localhost:8080/v1/signal/riot/images/champions/15.18.1/Ahri/1" | jq .
-```
-
-**Get Item Image:**
-```bash
-curl -s "http://localhost:8080/v1/signal/riot/images/items/15.18.1/1001" | jq .
-```
-
-**Get Summoner Spell Image:**
-```bash
-curl -s "http://localhost:8080/v1/signal/riot/images/spells/15.18.1/SummonerFlash" | jq .
-```
-
-**Get Rune Image:**
-```bash
-curl -s "http://localhost:8080/v1/signal/riot/images/runes/perk-images/Styles/Domination/Electrocute/Electrocute.png" | jq .
-```
-
-**Get Profile Icon Image:**
-```bash
-curl -s "http://localhost:8080/v1/signal/riot/images/profile-icons/15.18.1/1" | jq .
-```
-
-**Get Map Image:**
-```bash
-curl -s "http://localhost:8080/v1/signal/riot/images/maps/15.18.1/11" | jq .
-```
+---
 
 ## 🏗 Architecture
 
-### Clean Architecture
-- **Domain Layer**: Business logic and entities
-- **Infrastructure Layer**: External dependencies (HTTP, Database)
-- **Presentation Layer**: HTTP handlers and routing
+### Modules
 
-### Key Components
-- **MetaGameService**: Core analysis engine
-- **RiotClient**: API client with rate limiting
-- **Repository Pattern**: Data access abstraction
-- **Docker Containerization**: Production-ready deployment
+- **Signal**: Game data, meta-game analysis, Riot API integration
+- **Relay**: Event management, live streaming, viewership tracking
+- **Shared**: Common utilities (pagination, HTTP helpers, database)
 
 ### Technologies
-- **Go 1.21+**: High-performance backend
-- **PostgreSQL**: Robust data storage
+
+- **Go 1.22+**: High-performance backend
+- **PostgreSQL**: Robust data storage with GORM
 - **Chi Router**: Lightweight HTTP routing
-- **GORM**: ORM with migrations
-- **Swagger**: API documentation
-- **Docker**: Containerization
-- **Data Dragon API**: Official League of Legends static data
-- **Data Dragon Images API**: Complete image URLs for champions, items, runes, and abilities
-- **Riot Games APIs**: Champion rotations, league data, and player statistics
+- **Swagger**: Auto-generated API documentation
+- **Docker**: Production-ready containerization
+- **GitHub Actions**: Automated CI/CD pipeline
+
+### Clean Architecture
+
+- **Domain Layer**: Business logic and entities
+- **Infrastructure Layer**: HTTP handlers, repositories
+- **Ports & Adapters**: Hexagonal architecture pattern
+
+---
+
+## 🚀 Deployment
+
+### Production
+
+```bash
+docker-compose -f docker-compose.prod.yml up -d
+```
+
+### CI/CD Pipeline
+
+- **go-ci.yml**: Build and test on push/PR
+- **docker-publish.yml**: Build and push Docker images
+- **deploy.yml**: Auto-deploy to production on main branch
+
+---
 
 ## 🔧 Configuration
 
 ### Environment Variables
+
 ```env
 # Database
 STORAGE=postgres
@@ -235,48 +230,41 @@ RIOT_API_KEY=RGAPI-xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
 # Server
 PORT=8080
 CORS_ALLOWED_ORIGINS=http://localhost:3000,https://yourdomain.com
-
-# Worker
-WORKER_INTERVAL_SEC=30
 ```
 
-### Riot Games API Key
-1. Visit [Riot Developer Portal](https://developer.riotgames.com/)
-2. Create a new application
-3. Copy the API key to your `.env` file
-4. Ensure proper rate limits for your use case
+---
 
-## 🚀 Deployment
+## 📊 API Response Format
 
-### Production Setup
-```bash
-# Production compose file
-docker-compose -f docker-compose.prod.yml up -d
+### Paginated Response
 
-# With custom environment
-docker-compose -f docker-compose.prod.yml --env-file .env.prod up -d
+```json
+{
+  "items": [...],
+  "pagination": {
+    "limit": 20,
+    "offset": 0,
+    "total": 480,
+    "hasMore": true
+  }
+}
 ```
 
-### Health Monitoring
-```bash
-# Health check
-curl http://localhost:8080/healthz
+### Event Response
 
-# Detailed health
-curl http://localhost:8080/v1/signal/riot/_health
+```json
+{
+  "uuid": "...",
+  "slug": "vct-emea-final",
+  "title": "VCT EMEA Final",
+  "game": "val",
+  "league": "VCT EMEA",
+  "starts_at": "2025-11-23T10:00:00Z",
+  "ends_at": "2025-11-23T18:00:00Z"
+}
 ```
 
-## 📈 Performance & Scaling
-
-### Rate Limiting
-- **Riot API**: 18 requests/second, 95 requests/minute
-- **Automatic Retry**: Failed requests are retried with backoff
-- **Circuit Breaker**: Protection against API outages
-
-### Caching Strategy
-- **Static Data**: Champion information cached locally
-- **API Responses**: Intelligent caching for frequently requested data
-- **Database Indexing**: Optimized queries for real-time performance
+---
 
 ## 🤝 Contributing
 
@@ -286,18 +274,20 @@ curl http://localhost:8080/v1/signal/riot/_health
 4. Add tests if applicable
 5. Submit a pull request
 
+---
+
 ## 📄 License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+MIT License - see LICENSE file for details.
+
+---
 
 ## 🙏 Acknowledgments
 
-- **Riot Games**: For providing comprehensive League of Legends APIs
-- **Data Dragon API**: For complete static game data including champions, items, runes, and summoner spells
-- **Data Dragon Images API**: For official League of Legends image assets and CDN hosting
-- **Riot Developer Community**: For documentation and support
+- **Riot Games**: For comprehensive League of Legends APIs
+- **Data Dragon**: For static game data and image assets
 - **Open Source Community**: For the amazing Go ecosystem
 
 ---
 
-**HypeAtlas** - Transforming League of Legends data into actionable gaming intelligence.
+**HypeAtlas** - Transforming esports data into actionable intelligence.
