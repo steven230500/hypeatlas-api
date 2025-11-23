@@ -191,6 +191,34 @@ func (c *Client) GetLatestVersion() (string, error) {
 	return versions[0], nil
 }
 
+// GetAllVersions obtiene todas las versiones disponibles del juego desde Data Dragon
+func (c *Client) GetAllVersions() ([]string, error) {
+	url := "https://ddragon.leagueoflegends.com/api/versions.json"
+
+	resp, err := c.makeRequestWithoutAuth("GET", url, nil)
+	if err != nil {
+		return nil, fmt.Errorf("error making request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("API returned status %d", resp.StatusCode)
+	}
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("error reading response: %w", err)
+	}
+
+	var versions VersionResponse
+	if err := json.Unmarshal(body, &versions); err != nil {
+		return nil, fmt.Errorf("error parsing response: %w", err)
+	}
+
+	return versions, nil
+}
+
+
 // GetChampions obtiene la lista de campeones para una versión específica desde Data Dragon
 func (c *Client) GetChampions(version string) (*ChampionsResponse, error) {
 	url := fmt.Sprintf("https://ddragon.leagueoflegends.com/cdn/%s/data/en_US/champion.json", version)

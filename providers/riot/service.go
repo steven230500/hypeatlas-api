@@ -251,15 +251,14 @@ func NewDataDragonService(client *Client) *DataDragonService {
 
 // GetGameVersions obtiene todas las versiones disponibles del juego
 func (s *DataDragonService) GetGameVersions(ctx context.Context) ([]string, error) {
-	versions, err := s.client.GetLatestVersion()
+	versions, err := s.client.GetAllVersions()
 	if err != nil {
-		return nil, fmt.Errorf("error getting latest version: %w", err)
+		return nil, err
 	}
-
-	// Para obtener todas las versiones, usamos la API de versiones
-	// Por ahora devolvemos solo la última versión
-	return []string{versions}, nil
+	fmt.Printf("[DEBUG] GetGameVersions returning %d versions\n", len(versions))
+	return versions, nil
 }
+
 
 // GetItems obtiene datos de items para una versión específica
 func (s *DataDragonService) GetItems(ctx context.Context, version string) (map[string]interface{}, error) {
