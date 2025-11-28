@@ -868,47 +868,54 @@ func compareChampions(old, new ChampionData) []map[string]interface{} {
 	compareStat := func(name string, oldVal, newVal float64, higherIsBetter bool) {
 		if oldVal != newVal {
 			changeType := "neutral"
+			diffVal := newVal - oldVal
+			verb := "changed"
+
 			if higherIsBetter {
 				if newVal > oldVal {
 					changeType = "buff"
+					verb = "increased"
 				} else {
 					changeType = "nerf"
+					verb = "decreased"
 				}
 			} else {
-				// Para stats donde menos es mejor (ej: cooldowns, pero aquí solo tenemos stats base)
-				// En stats base, casi siempre más es mejor, excepto quizás delay de ataque o algo así
+				// Para stats donde menos es mejor
 				if newVal < oldVal {
 					changeType = "buff"
+					verb = "decreased"
 				} else {
 					changeType = "nerf"
+					verb = "increased"
 				}
 			}
 
 			diffs = append(diffs, map[string]interface{}{
-				"stat":      name,
-				"old":       oldVal,
-				"new":       newVal,
-				"diff":      newVal - oldVal,
-				"type":      changeType,
-				"formatted": fmt.Sprintf("%s: %.2f -> %.2f", name, oldVal, newVal),
+				"stat":        name,
+				"old":         oldVal,
+				"new":         newVal,
+				"diff":        diffVal,
+				"type":        changeType,
+				"formatted":   fmt.Sprintf("%s: %g -> %g (%+g)", name, oldVal, newVal, diffVal),
+				"description": fmt.Sprintf("%s %s from %g to %g", name, verb, oldVal, newVal),
 			})
 		}
 	}
 
-	compareStat("HP", old.Stats.HP, new.Stats.HP, true)
-	compareStat("HP/Lvl", old.Stats.Hpperlevel, new.Stats.Hpperlevel, true)
-	compareStat("MP", old.Stats.MP, new.Stats.MP, true)
-	compareStat("MP/Lvl", old.Stats.Mpperlevel, new.Stats.Mpperlevel, true)
+	compareStat("Health", old.Stats.HP, new.Stats.HP, true)
+	compareStat("Health/Lvl", old.Stats.Hpperlevel, new.Stats.Hpperlevel, true)
+	compareStat("Mana", old.Stats.MP, new.Stats.MP, true)
+	compareStat("Mana/Lvl", old.Stats.Mpperlevel, new.Stats.Mpperlevel, true)
 	compareStat("Move Speed", old.Stats.Movespeed, new.Stats.Movespeed, true)
 	compareStat("Armor", old.Stats.Armor, new.Stats.Armor, true)
 	compareStat("Armor/Lvl", old.Stats.Armorperlevel, new.Stats.Armorperlevel, true)
-	compareStat("Spell Block", old.Stats.Spellblock, new.Stats.Spellblock, true)
-	compareStat("Spell Block/Lvl", old.Stats.Spellblockperlevel, new.Stats.Spellblockperlevel, true)
+	compareStat("Magic Resist", old.Stats.Spellblock, new.Stats.Spellblock, true)
+	compareStat("Magic Resist/Lvl", old.Stats.Spellblockperlevel, new.Stats.Spellblockperlevel, true)
 	compareStat("Attack Range", old.Stats.Attackrange, new.Stats.Attackrange, true)
 	compareStat("HP Regen", old.Stats.Hpregen, new.Stats.Hpregen, true)
 	compareStat("HP Regen/Lvl", old.Stats.Hpregenperlevel, new.Stats.Hpregenperlevel, true)
-	compareStat("MP Regen", old.Stats.Mpregen, new.Stats.Mpregen, true)
-	compareStat("MP Regen/Lvl", old.Stats.Mpregenperlevel, new.Stats.Mpregenperlevel, true)
+	compareStat("Mana Regen", old.Stats.Mpregen, new.Stats.Mpregen, true)
+	compareStat("Mana Regen/Lvl", old.Stats.Mpregenperlevel, new.Stats.Mpregenperlevel, true)
 	compareStat("Attack Damage", old.Stats.Attackdamage, new.Stats.Attackdamage, true)
 	compareStat("Attack Damage/Lvl", old.Stats.Attackdamageperlevel, new.Stats.Attackdamageperlevel, true)
 	compareStat("Attack Speed", old.Stats.Attackspeed, new.Stats.Attackspeed, true)
