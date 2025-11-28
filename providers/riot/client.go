@@ -147,12 +147,36 @@ func (c *Client) makeRequestWithAuth(method, url string, body io.Reader, withAut
 // VersionResponse respuesta de la API de versiones
 type VersionResponse []string
 
+type ChampionStats struct {
+	HP                   float64 `json:"hp"`
+	Hpperlevel           float64 `json:"hpperlevel"`
+	MP                   float64 `json:"mp"`
+	Mpperlevel           float64 `json:"mpperlevel"`
+	Movespeed            float64 `json:"movespeed"`
+	Armor                float64 `json:"armor"`
+	Armorperlevel        float64 `json:"armorperlevel"`
+	Spellblock           float64 `json:"spellblock"`
+	Spellblockperlevel   float64 `json:"spellblockperlevel"`
+	Attackrange          float64 `json:"attackrange"`
+	Hpregen              float64 `json:"hpregen"`
+	Hpregenperlevel      float64 `json:"hpregenperlevel"`
+	Mpregen              float64 `json:"mpregen"`
+	Mpregenperlevel      float64 `json:"mpregenperlevel"`
+	Crit                 float64 `json:"crit"`
+	Critperlevel         float64 `json:"critperlevel"`
+	Attackdamage         float64 `json:"attackdamage"`
+	Attackdamageperlevel float64 `json:"attackdamageperlevel"`
+	Attackspeedperlevel  float64 `json:"attackspeedperlevel"`
+	Attackspeed          float64 `json:"attackspeed"`
+}
+
 // ChampionData datos de un campeón
 type ChampionData struct {
-	ID    string `json:"id"`
-	Key   string `json:"key"`
-	Name  string `json:"name"`
-	Title string `json:"title"`
+	ID    string        `json:"id"`
+	Key   string        `json:"key"`
+	Name  string        `json:"name"`
+	Title string        `json:"title"`
+	Stats ChampionStats `json:"stats"`
 }
 
 // ChampionsResponse respuesta de la API de campeones
@@ -219,7 +243,6 @@ func (c *Client) GetAllVersions() ([]string, error) {
 }
 
 
-// GetChampions obtiene la lista de campeones para una versión específica desde Data Dragon
 func (c *Client) GetChampions(version string) (*ChampionsResponse, error) {
 	url := fmt.Sprintf("https://ddragon.leagueoflegends.com/cdn/%s/data/en_US/champion.json", version)
 
@@ -791,10 +814,107 @@ func (c *Client) GetPatchChanges(fromVersion, toVersion string) (map[string]inte
 		}
 	}
 
-	// Aquí podríamos agregar lógica para detectar cambios específicos en estadísticas
-	// Por ahora solo mostramos el resumen básico
+	// Encontrar campeones modificados (buffs/nerfs en stats base)
+	for _, toChamp := range toChampions.Data {
+		if fromChamp, exists := fromChampMap[toChamp.ID]; exists {
+			diffs := compareChampions(fromChamp, toChamp)
+			if len(diffs) > 0 {
+				modChamp := map[string]interface{}{
+					"id":      toChamp.ID,
+					"name":    toChamp.Name,
+					"title":   toChamp.Title,
+					"changes": diffs,
+				}
+				changes["modified_champions"] = append(changes["modified_champions"].([]map[string]interface{}), modChamp)
+				changes["summary"].(map[string]int)["modified"]++
+
+				// Categorizar como buff o nerf basado en los cambios
+				// Esta es una heurística simple
+				buffCount := 0
+				nerfCount := 0
+				for _, diff := range diffs {
+					if diff["type"] == "buff" {
+						buffCount++
+					} else {
+						nerfCount++
+					}
+				}
+
+				if buffCount > nerfCount {
+					changes["buffs"] = append(changes["buffs"].([]string), toChamp.Name)
+				} else if nerfCount > buffCount {
+					changes["nerfs"] = append(changes["nerfs"].([]string), toChamp.Name)
+				} else {
+					// Si hay empate o cambios mixtos, lo ponemos en ambos o en una categoría "adjusted"
+					// Por simplicidad, lo agregamos a buffs si tiene al menos un buff
+					if buffCount > 0 {
+						changes["buffs"] = append(changes["buffs"].([]string), toChamp.Name)
+					}
+					if nerfCount > 0 {
+						changes["nerfs"] = append(changes["nerfs"].([]string), toChamp.Name)
+					}
+				}
+			}
+		}
+	}
 
 	return changes, nil
+}
+
+func compareChampions(old, new ChampionData) []map[string]interface{} {
+	var diffs []map[string]interface{}
+
+	// Helper para comparar floats con tolerancia
+	compareStat := func(name string, oldVal, newVal float64, higherIsBetter bool) {
+		if oldVal != newVal {
+			changeType := "neutral"
+			if higherIsBetter {
+				if newVal > oldVal {
+					changeType = "buff"
+				} else {
+					changeType = "nerf"
+				}
+			} else {
+				// Para stats donde menos es mejor (ej: cooldowns, pero aquí solo tenemos stats base)
+				// En stats base, casi siempre más es mejor, excepto quizás delay de ataque o algo así
+				if newVal < oldVal {
+					changeType = "buff"
+				} else {
+					changeType = "nerf"
+				}
+			}
+
+			diffs = append(diffs, map[string]interface{}{
+				"stat":      name,
+				"old":       oldVal,
+				"new":       newVal,
+				"diff":      newVal - oldVal,
+				"type":      changeType,
+				"formatted": fmt.Sprintf("%s: %.2f -> %.2f", name, oldVal, newVal),
+			})
+		}
+	}
+
+	compareStat("HP", old.Stats.HP, new.Stats.HP, true)
+	compareStat("HP/Lvl", old.Stats.Hpperlevel, new.Stats.Hpperlevel, true)
+	compareStat("MP", old.Stats.MP, new.Stats.MP, true)
+	compareStat("MP/Lvl", old.Stats.Mpperlevel, new.Stats.Mpperlevel, true)
+	compareStat("Move Speed", old.Stats.Movespeed, new.Stats.Movespeed, true)
+	compareStat("Armor", old.Stats.Armor, new.Stats.Armor, true)
+	compareStat("Armor/Lvl", old.Stats.Armorperlevel, new.Stats.Armorperlevel, true)
+	compareStat("Spell Block", old.Stats.Spellblock, new.Stats.Spellblock, true)
+	compareStat("Spell Block/Lvl", old.Stats.Spellblockperlevel, new.Stats.Spellblockperlevel, true)
+	compareStat("Attack Range", old.Stats.Attackrange, new.Stats.Attackrange, true)
+	compareStat("HP Regen", old.Stats.Hpregen, new.Stats.Hpregen, true)
+	compareStat("HP Regen/Lvl", old.Stats.Hpregenperlevel, new.Stats.Hpregenperlevel, true)
+	compareStat("MP Regen", old.Stats.Mpregen, new.Stats.Mpregen, true)
+	compareStat("MP Regen/Lvl", old.Stats.Mpregenperlevel, new.Stats.Mpregenperlevel, true)
+	compareStat("Attack Damage", old.Stats.Attackdamage, new.Stats.Attackdamage, true)
+	compareStat("Attack Damage/Lvl", old.Stats.Attackdamageperlevel, new.Stats.Attackdamageperlevel, true)
+	compareStat("Attack Speed", old.Stats.Attackspeed, new.Stats.Attackspeed, true)
+	compareStat("Attack Speed/Lvl", old.Stats.Attackspeedperlevel, new.Stats.Attackspeedperlevel, true)
+
+	return diffs
 }
 
 // GetItems obtiene datos de items para una versión específica desde Data Dragon

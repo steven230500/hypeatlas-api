@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/steven230500/hypeatlas-api/domain/entities"
@@ -120,7 +121,7 @@ func (h *RiotHandler) analyzeChampionRotation(w http.ResponseWriter, r *http.Req
 	}
 	analysis, err := h.metaGameSvc.AnalyzeChampionRotation(r.Context(), platform)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("Error analyzing champion rotation: %v", err), http.StatusInternalServerError)
+		h.handleRiotError(w, err, "analyzing champion rotation")
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -147,7 +148,7 @@ func (h *RiotHandler) analyzeLeagueRankings(w http.ResponseWriter, r *http.Reque
 	}
 	analysis, err := h.metaGameSvc.AnalyzeLeagueRankings(r.Context(), platform, queue)
 	if err != nil {
-		http.Error(w, fmt.Errorf("Error analyzing league rankings: %w", err).Error(), http.StatusInternalServerError)
+		h.handleRiotError(w, err, "analyzing league rankings")
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -172,7 +173,7 @@ func (h *RiotHandler) generateMetaReport(w http.ResponseWriter, r *http.Request)
 	}
 	report, err := h.metaGameSvc.GenerateMetaReport(r.Context(), platform)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("Error generating meta report: %v", err), http.StatusInternalServerError)
+		h.handleRiotError(w, err, "generating meta report")
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -1096,4 +1097,19 @@ func (h *RiotHandler) getPassiveImage(w http.ResponseWriter, r *http.Request) {
 		PassiveFile: passiveFile,
 		Data:        image,
 	})
+}
+// handleRiotError handles errors from Riot API services
+func (h *RiotHandler) handleRiotError(w http.ResponseWriter, err error, context string) {
+	errMsg := err.Error()
+	if strings.Contains(errMsg, "status 401") {
+		fmt.Printf("[RIOT-ERROR] Invalid API Key: %v\n", err)
+		http.Error(w, "Riot API Key is invalid or expired. Please check server logs.", http.StatusBadGateway)
+		return
+	}
+	if strings.Contains(errMsg, "status 403") {
+		fmt.Printf("[RIOT-ERROR] Forbidden: %v\n", err)
+		http.Error(w, "Riot API access forbidden. Please check server logs.", http.StatusBadGateway)
+		return
+	}
+	http.Error(w, fmt.Sprintf("Error %s: %v", context, err), http.StatusInternalServerError)
 }
