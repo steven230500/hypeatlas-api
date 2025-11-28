@@ -829,7 +829,6 @@ func (c *Client) GetPatchChanges(fromVersion, toVersion string) (map[string]inte
 				changes["summary"].(map[string]int)["modified"]++
 
 				// Categorizar como buff o nerf basado en los cambios
-				// Esta es una heurística simple
 				buffCount := 0
 				nerfCount := 0
 				for _, diff := range diffs {
@@ -845,14 +844,54 @@ func (c *Client) GetPatchChanges(fromVersion, toVersion string) (map[string]inte
 				} else if nerfCount > buffCount {
 					changes["nerfs"] = append(changes["nerfs"].([]string), toChamp.Name)
 				} else {
-					// Si hay empate o cambios mixtos, lo ponemos en ambos o en una categoría "adjusted"
-					// Por simplicidad, lo agregamos a buffs si tiene al menos un buff
 					if buffCount > 0 {
 						changes["buffs"] = append(changes["buffs"].([]string), toChamp.Name)
 					}
 					if nerfCount > 0 {
 						changes["nerfs"] = append(changes["nerfs"].([]string), toChamp.Name)
 					}
+				}
+			}
+		}
+	}
+
+	// Obtener items para ambas versiones
+	fromItems, err := c.GetItems(fromVersion)
+	if err != nil {
+		// No fallamos todo si falla items, solo logueamos o ignoramos
+		fmt.Printf("Error getting items for version %s: %v\n", fromVersion, err)
+	}
+	
+	toItems, err := c.GetItems(toVersion)
+	if err != nil {
+		fmt.Printf("Error getting items for version %s: %v\n", toVersion, err)
+	}
+
+	if fromItems != nil && toItems != nil {
+		changes["modified_items"] = []map[string]interface{}{}
+		
+		// Mapa de items antiguos
+		fromItemMap := fromItems.Data
+
+		for id, toItem := range toItems.Data {
+			if fromItem, exists := fromItemMap[id]; exists {
+				// Ignorar items que no se compran (generalmente) o son internos
+				if !toItem.Gold.Purchasable && !fromItem.Gold.Purchasable {
+					continue
+				}
+
+				diffs := compareItems(fromItem, toItem)
+				if len(diffs) > 0 {
+					modItem := map[string]interface{}{
+						"id":      id,
+						"name":    toItem.Name,
+						"changes": diffs,
+					}
+					changes["modified_items"] = append(changes["modified_items"].([]map[string]interface{}), modItem)
+					changes["summary"].(map[string]int)["modified"]++
+					
+					// Categorizar items en buffs/nerfs también?
+					// Por ahora solo los listamos en modified_items
 				}
 			}
 		}
@@ -924,8 +963,121 @@ func compareChampions(old, new ChampionData) []map[string]interface{} {
 	return diffs
 }
 
+// Helper para comparar items
+func compareItems(old, new ItemData) []map[string]interface{} {
+	var diffs []map[string]interface{}
+
+	// Comparar precio
+	if old.Gold.Total != new.Gold.Total {
+		diff := float64(new.Gold.Total - old.Gold.Total)
+		changeType := "nerf" // Más caro es nerf
+		verb := "increased"
+		if diff < 0 {
+			changeType = "buff" // Más barato es buff
+			verb = "decreased"
+		}
+		
+		diffs = append(diffs, map[string]interface{}{
+			"stat":        "Gold Cost",
+			"old":         float64(old.Gold.Total),
+			"new":         float64(new.Gold.Total),
+			"diff":        diff,
+			"type":        changeType,
+			"formatted":   fmt.Sprintf("Cost: %d -> %d (%+d)", old.Gold.Total, new.Gold.Total, int(diff)),
+			"description": fmt.Sprintf("Cost %s from %d to %d", verb, old.Gold.Total, new.Gold.Total),
+		})
+	}
+
+	// Comparar stats
+	// Crear un mapa unificado de todas las stats presentes en ambos
+	allStats := make(map[string]bool)
+	for k := range old.Stats {
+		allStats[k] = true
+	}
+	for k := range new.Stats {
+		allStats[k] = true
+	}
+
+	for statName := range allStats {
+		oldVal := old.Stats[statName]
+		newVal := new.Stats[statName]
+
+		if oldVal != newVal {
+			diffVal := newVal - oldVal
+			changeType := "neutral"
+			verb := "changed"
+			
+			// Asumimos que más stats es mejor (buff)
+			// Hay excepciones como cooldown reduction donde el valor podría ser negativo si es "cooldown", 
+			// pero en DataDragon suele ser "AbilityHaste" o "CooldownReduction" positivo.
+			if newVal > oldVal {
+				changeType = "buff"
+				verb = "increased"
+			} else {
+				changeType = "nerf"
+				verb = "decreased"
+			}
+
+			// Formatear nombre de stat
+			readableName := statName
+			switch statName {
+			case "FlatHPPoolMod": readableName = "Health"
+			case "FlatMPPoolMod": readableName = "Mana"
+			case "FlatPhysicalDamageMod": readableName = "Attack Damage"
+			case "FlatMagicDamageMod": readableName = "Ability Power"
+			case "FlatArmorMod": readableName = "Armor"
+			case "FlatSpellBlockMod": readableName = "Magic Resist"
+			case "PercentAttackSpeedMod": readableName = "Attack Speed"
+			case "FlatMovementSpeedMod": readableName = "Move Speed"
+			case "PercentMovementSpeedMod": readableName = "Move Speed %"
+			case "FlatCritChanceMod": readableName = "Crit Chance"
+			case "PercentLifeStealMod": readableName = "Life Steal"
+			}
+
+			diffs = append(diffs, map[string]interface{}{
+				"stat":        readableName,
+				"old":         oldVal,
+				"new":         newVal,
+				"diff":        diffVal,
+				"type":        changeType,
+				"formatted":   fmt.Sprintf("%s: %g -> %g (%+g)", readableName, oldVal, newVal, diffVal),
+				"description": fmt.Sprintf("%s %s from %g to %g", readableName, verb, oldVal, newVal),
+			})
+		}
+	}
+
+	return diffs
+}
+
+// ItemData representa la información de un item
+type ItemData struct {
+	Name        string            `json:"name"`
+	Description string            `json:"description"`
+	Colloq      string            `json:"colloq"`
+	Plaintext   string            `json:"plaintext"`
+	Gold        ItemGold          `json:"gold"`
+	Stats       map[string]float64 `json:"stats"`
+	Tags        []string          `json:"tags"`
+}
+
+// ItemGold representa la información de oro de un item
+type ItemGold struct {
+	Base        int  `json:"base"`
+	Purchasable bool `json:"purchasable"`
+	Total       int  `json:"total"`
+	Sell        int  `json:"sell"`
+}
+
+// ItemList representa la respuesta de la lista de items
+type ItemList struct {
+	Type    string              `json:"type"`
+	Version string              `json:"version"`
+	Basic   ItemData            `json:"basic"`
+	Data    map[string]ItemData `json:"data"`
+}
+
 // GetItems obtiene datos de items para una versión específica desde Data Dragon
-func (c *Client) GetItems(version string) (map[string]interface{}, error) {
+func (c *Client) GetItems(version string) (*ItemList, error) {
 	url := fmt.Sprintf("https://ddragon.leagueoflegends.com/cdn/%s/data/en_US/item.json", version)
 
 	resp, err := c.makeRequestWithoutAuth("GET", url, nil)
@@ -943,12 +1095,12 @@ func (c *Client) GetItems(version string) (map[string]interface{}, error) {
 		return nil, fmt.Errorf("error reading response: %w", err)
 	}
 
-	var result map[string]interface{}
+	var result ItemList
 	if err := json.Unmarshal(body, &result); err != nil {
 		return nil, fmt.Errorf("error parsing response: %w", err)
 	}
 
-	return result, nil
+	return &result, nil
 }
 
 // GetRunes obtiene datos de runas para una versión específica desde Data Dragon

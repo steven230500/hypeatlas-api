@@ -173,6 +173,11 @@ func (s *Service) GetRegions(ctx context.Context) ([]string, error) {
 	return s.client.GetRegions()
 }
 
+// GetItems obtiene datos de items para una versión específica
+func (s *Service) GetItems(ctx context.Context, version string) (interface{}, error) {
+	return s.client.GetItems(version)
+}
+
 // GetChampionStats obtiene estadísticas de uso de campeones
 func (s *Service) GetChampionStats(ctx context.Context, version string) (map[string]interface{}, error) {
 	return s.client.GetChampionStats(version)
@@ -266,7 +271,7 @@ func (s *DataDragonService) GetGameVersions(ctx context.Context) ([]string, erro
 
 
 // GetItems obtiene datos de items para una versión específica
-func (s *DataDragonService) GetItems(ctx context.Context, version string) (map[string]interface{}, error) {
+func (s *DataDragonService) GetItems(ctx context.Context, version string) (interface{}, error) {
 	// Usar el método del cliente que ya implementamos
 	return s.client.GetItems(version)
 }
