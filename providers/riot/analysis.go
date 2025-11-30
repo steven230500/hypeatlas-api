@@ -3,8 +3,8 @@ package riot
 import (
 	"fmt"
 	"sort"
+	"strconv"
 	"sync"
-	"time"
 )
 
 // RegionMetaReport contiene el reporte del análisis del meta regional
@@ -39,6 +39,23 @@ type CompositionStat struct {
 
 // AnalyzeRegionMeta analiza el meta de una región basado en partidas de Challenger
 func (c *Client) AnalyzeRegionMeta(platform string, playerSampleSize, matchesPerPlayer int) (*RegionMetaReport, error) {
+	// 0. Obtener datos estáticos de campeones (Data Dragon) para resolver nombres
+	latestVersion, err := c.GetLatestVersion()
+	if err != nil {
+		return nil, fmt.Errorf("error getting latest version: %w", err)
+	}
+	championsData, err := c.GetChampions(latestVersion)
+	if err != nil {
+		return nil, fmt.Errorf("error getting champions data: %w", err)
+	}
+
+	// Mapa ID -> Nombre
+	champIDToName := make(map[int]string)
+	for _, champ := range championsData.Data {
+		id, _ := strconv.Atoi(champ.Key)
+		champIDToName[id] = champ.Name
+	}
+
 	// 1. Obtener Challenger League
 	league, err := c.GetChallengerLeague(platform, "RANKED_SOLO_5x5")
 	if err != nil {
@@ -61,8 +78,8 @@ func (c *Client) AnalyzeRegionMeta(platform string, playerSampleSize, matchesPer
 	var mu sync.Mutex
 	var wg sync.WaitGroup
 
-	// Canal para limitar concurrencia (evitar rate limits agresivos)
-	sem := make(chan struct{}, 5) // 5 concurrent requests
+	// Canal para limitar concurrencia de jugadores
+	semPlayers := make(chan struct{}, 10)
 
 	fmt.Printf("Analyzing %d players from %s...\n", len(entries), platform)
 
@@ -70,14 +87,12 @@ func (c *Client) AnalyzeRegionMeta(platform string, playerSampleSize, matchesPer
 		wg.Add(1)
 		go func(entry LeagueEntry) {
 			defer wg.Done()
-			sem <- struct{}{} // Acquire token
-			defer func() { <-sem }() // Release token
+			semPlayers <- struct{}{} // Acquire token
+			defer func() { <-semPlayers }() // Release token
 
 			// Obtener Match IDs
-			// Usamos el PUUID directamente de la entrada de liga (ahorra una llamada a API)
 			puuid := entry.Puuid
 			if puuid == "" {
-				// Fallback si por alguna razón no viene el PUUID (aunque debería)
 				summoner, err := c.GetSummonerBySummonerId(platform, entry.SummonerID)
 				if err != nil {
 					fmt.Printf("Error getting summoner %s: %v\n", entry.SummonerName, err)
@@ -113,55 +128,83 @@ func (c *Client) AnalyzeRegionMeta(platform string, playerSampleSize, matchesPer
 	champStats := make(map[int]*ChampionMetaStat)
 	totalGames := 0
 
-	// Procesar partidas (también con concurrencia limitada)
-	for i, matchId := range matchIds {
-		// Rate limiting manual simple para no explotar la API key de desarrollo
-		if i > 0 && i%10 == 0 {
-			time.Sleep(1 * time.Second)
-		}
+	// Worker pool para procesar partidas concurrentemente
+	// Aumentamos concurrencia ya que el RateLimiter interno gestionará los límites
+	concurrency := 20
+	semMatches := make(chan struct{}, concurrency)
+	var statsMu sync.Mutex
 
-		match, err := c.GetMatch(platform, matchId)
-		if err != nil {
-			fmt.Printf("Error getting match %s: %v\n", matchId, err)
-			continue
-		}
+	for _, matchId := range matchIds {
+		wg.Add(1)
+		go func(mId string) {
+			defer wg.Done()
+			semMatches <- struct{}{} // Acquire token
+			defer func() { <-semMatches }() // Release token
 
-		totalGames++
+			match, err := c.GetMatch(platform, mId)
+			if err != nil {
+				fmt.Printf("Error getting match %s: %v\n", mId, err)
+				return
+			}
 
-		// Procesar Bans
-		for _, team := range match.Info.Teams {
-			for _, ban := range team.Bans {
-				if _, exists := champStats[ban.ChampionID]; !exists {
-					champStats[ban.ChampionID] = &ChampionMetaStat{ID: ban.ChampionID}
+			statsMu.Lock()
+			defer statsMu.Unlock()
+
+			totalGames++
+
+			// Procesar Bans
+			for _, team := range match.Info.Teams {
+				for _, ban := range team.Bans {
+					if _, exists := champStats[ban.ChampionID]; !exists {
+						name := champIDToName[ban.ChampionID]
+						if name == "" {
+							name = "Unknown"
+						}
+						champStats[ban.ChampionID] = &ChampionMetaStat{ID: ban.ChampionID, Name: name}
+					}
+					champStats[ban.ChampionID].Bans++
 				}
-				champStats[ban.ChampionID].Bans++
 			}
-		}
 
-		// Procesar Picks y Wins
-		for _, p := range match.Info.Participants {
-			if _, exists := champStats[p.ChampionID]; !exists {
-				champStats[p.ChampionID] = &ChampionMetaStat{ID: p.ChampionID, Name: p.ChampionName}
+			// Procesar Picks y Wins
+			for _, p := range match.Info.Participants {
+				if _, exists := champStats[p.ChampionID]; !exists {
+					name := champIDToName[p.ChampionID]
+					if name == "" {
+						// Fallback al nombre de la API si no está en Data Dragon (raro)
+						name = p.ChampionName
+					}
+					champStats[p.ChampionID] = &ChampionMetaStat{ID: p.ChampionID, Name: name}
+				}
+				
+				// Asegurar que tenemos el nombre correcto
+				if champStats[p.ChampionID].Name == "Unknown" || champStats[p.ChampionID].Name == "" {
+					name := champIDToName[p.ChampionID]
+					if name != "" {
+						champStats[p.ChampionID].Name = name
+					} else {
+						champStats[p.ChampionID].Name = p.ChampionName
+					}
+				}
+				
+				champStats[p.ChampionID].Games++
+				if p.Win {
+					champStats[p.ChampionID].Wins++
+				}
 			}
-			// Actualizar nombre si falta (por bans)
-			if champStats[p.ChampionID].Name == "" {
-				champStats[p.ChampionID].Name = p.ChampionName
-			}
-			
-			champStats[p.ChampionID].Games++
-			if p.Win {
-				champStats[p.ChampionID].Wins++
-			}
-		}
+		}(matchId)
 	}
+
+	wg.Wait()
 
 	// 5. Generar reporte
 	report := &RegionMetaReport{
-		Region:          platform,
-		AnalyzedMatches: totalGames,
-		AnalyzedPlayers: len(entries),
-		TopChampions:    make([]ChampionMetaStat, 0),
-		TopBans:         make([]ChampionMetaStat, 0),
+		Region:             platform,
+		AnalyzedMatches:    totalGames,
+		AnalyzedPlayers:    len(entries),
+		TopChampions:       make([]ChampionMetaStat, 0),
+		TopBans:            make([]ChampionMetaStat, 0),
+		CommonCompositions: make([]CompositionStat, 0), // Inicializar vacío para evitar null
 	}
 
 	for _, stat := range champStats {
