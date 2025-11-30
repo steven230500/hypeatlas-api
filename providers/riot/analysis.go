@@ -134,6 +134,12 @@ func (c *Client) AnalyzeRegionMeta(platform string, playerSampleSize, matchesPer
 	semMatches := make(chan struct{}, concurrency)
 	var statsMu sync.Mutex
 
+	// Estructura auxiliar para tracking de composiciones
+	type compKey struct {
+		ids string // IDs ordenados y separados por coma
+	}
+	compStats := make(map[string]*CompositionStat)
+
 	for _, matchId := range matchIds {
 		wg.Add(1)
 		go func(mId string) {
@@ -167,31 +173,16 @@ func (c *Client) AnalyzeRegionMeta(platform string, playerSampleSize, matchesPer
 			}
 
 			// Procesar Picks y Wins
-			for _, p := range match.Info.Participants {
-				if _, exists := champStats[p.ChampionID]; !exists {
-					name := champIDToName[p.ChampionID]
-					if name == "" {
-						// Fallback al nombre de la API si no está en Data Dragon (raro)
-						name = p.ChampionName
-					}
-					champStats[p.ChampionID] = &ChampionMetaStat{ID: p.ChampionID, Name: name}
-				}
-				
-				// Asegurar que tenemos el nombre correcto
-				if champStats[p.ChampionID].Name == "Unknown" || champStats[p.ChampionID].Name == "" {
-					name := champIDToName[p.ChampionID]
-					if name != "" {
-						champStats[p.ChampionID].Name = name
-					} else {
-						champStats[p.ChampionID].Name = p.ChampionName
-					}
-				}
-				
-				champStats[p.ChampionID].Games++
-				if p.Win {
-					champStats[p.ChampionID].Wins++
-				}
+			participants := match.Info.Participants
+			
+			// Procesar Equipo 1 (índices 0-4)
+			processTeamComposition(participants[:5], champIDToName, champStats, compStats)
+			
+			// Procesar Equipo 2 (índices 5-9)
+			if len(participants) >= 10 {
+				processTeamComposition(participants[5:], champIDToName, champStats, compStats)
 			}
+
 		}(matchId)
 	}
 
@@ -204,7 +195,28 @@ func (c *Client) AnalyzeRegionMeta(platform string, playerSampleSize, matchesPer
 		AnalyzedPlayers:    len(entries),
 		TopChampions:       make([]ChampionMetaStat, 0),
 		TopBans:            make([]ChampionMetaStat, 0),
-		CommonCompositions: make([]CompositionStat, 0), // Inicializar vacío para evitar null
+		CommonCompositions: make([]CompositionStat, 0),
+	}
+
+	// Procesar composiciones
+	for _, comp := range compStats {
+		if comp.Games > 0 {
+			comp.WinRate = (float64(comp.Wins) / float64(comp.Games)) * 100
+			// Solo incluir si tiene al menos 2 partidas (para filtrar ruido)
+			if comp.Games >= 2 {
+				report.CommonCompositions = append(report.CommonCompositions, *comp)
+			}
+		}
+	}
+
+	// Ordenar composiciones por número de juegos
+	sort.Slice(report.CommonCompositions, func(i, j int) bool {
+		return report.CommonCompositions[i].Games > report.CommonCompositions[j].Games
+	})
+
+	// Limitar a top 10 composiciones
+	if len(report.CommonCompositions) > 10 {
+		report.CommonCompositions = report.CommonCompositions[:10]
 	}
 
 	for _, stat := range champStats {
@@ -242,4 +254,63 @@ func (c *Client) AnalyzeRegionMeta(platform string, playerSampleSize, matchesPer
 	}
 
 	return report, nil
+}
+
+// processTeamComposition procesa una composición de equipo
+func processTeamComposition(team []ParticipantDto, champIDToName map[int]string, champStats map[int]*ChampionMetaStat, compStats map[string]*CompositionStat) {
+	if len(team) == 0 {
+		return
+	}
+
+	var teamChampIDs []int
+	var teamChampNames []string
+	win := team[0].Win
+
+	for _, p := range team {
+		// Actualizar estadísticas individuales
+		if _, exists := champStats[p.ChampionID]; !exists {
+			name := champIDToName[p.ChampionID]
+			if name == "" {
+				name = p.ChampionName
+			}
+			champStats[p.ChampionID] = &ChampionMetaStat{ID: p.ChampionID, Name: name}
+		}
+		
+		// Asegurar nombre
+		if champStats[p.ChampionID].Name == "Unknown" || champStats[p.ChampionID].Name == "" {
+			name := champIDToName[p.ChampionID]
+			if name != "" {
+				champStats[p.ChampionID].Name = name
+			} else {
+				champStats[p.ChampionID].Name = p.ChampionName
+			}
+		}
+		
+		champStats[p.ChampionID].Games++
+		if p.Win {
+			champStats[p.ChampionID].Wins++
+		}
+
+		teamChampIDs = append(teamChampIDs, p.ChampionID)
+		teamChampNames = append(teamChampNames, champStats[p.ChampionID].Name)
+	}
+
+	// Generar key única para la composición (IDs ordenados)
+	sort.Ints(teamChampIDs)
+	key := ""
+	for _, id := range teamChampIDs {
+		key += fmt.Sprintf("%d,", id)
+	}
+
+	if _, exists := compStats[key]; !exists {
+		compStats[key] = &CompositionStat{
+			Champions: teamChampNames,
+			Games:     0,
+			Wins:      0,
+		}
+	}
+	compStats[key].Games++
+	if win {
+		compStats[key].Wins++
+	}
 }
