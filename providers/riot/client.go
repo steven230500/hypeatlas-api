@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 )
@@ -490,6 +491,7 @@ func (c *Client) GetLeagueEntries(platform, queue, tier, division string, page i
 
 // GetChallengerLeague obtiene la liga Challenger para una cola específica
 func (c *Client) GetChallengerLeague(platform, queue string) (*LeagueData, error) {
+	platform = normalizePlatform(platform)
 	url := fmt.Sprintf("https://%s.api.riotgames.com/lol/league/v4/challengerleagues/by-queue/%s", platform, queue)
 
 	resp, err := c.makeRequest("GET", url, nil)
@@ -1341,6 +1343,7 @@ type SummonerDTO struct {
 
 // GetSummonerBySummonerId obtiene la información de un invocador por su ID encriptado
 func (c *Client) GetSummonerBySummonerId(platform, summonerId string) (*SummonerDTO, error) {
+	platform = normalizePlatform(platform)
 	url := fmt.Sprintf("https://%s.api.riotgames.com/lol/summoner/v4/summoners/%s", platform, summonerId)
 
 	resp, err := c.makeRequest("GET", url, nil)
@@ -1538,8 +1541,40 @@ type ObjectiveDto struct {
 }
 
 // platformToRegion convierte un ID de plataforma (ej: NA1) a una región de enrutamiento (ej: americas)
+// normalizePlatform normaliza el ID de la plataforma (ej. NA -> NA1)
+func normalizePlatform(platform string) string {
+	switch strings.ToUpper(platform) {
+	case "NA":
+		return "NA1"
+	case "EUW":
+		return "EUW1"
+	case "EUNE":
+		return "EUN1"
+	case "KR":
+		return "KR"
+	case "BR":
+		return "BR1"
+	case "JP":
+		return "JP1"
+	case "LAN":
+		return "LA1"
+	case "LAS":
+		return "LA2"
+	case "OCE":
+		return "OC1"
+	case "TR":
+		return "TR1"
+	case "RU":
+		return "RU"
+	default:
+		return platform
+	}
+}
+
 func platformToRegion(platform string) string {
-	switch platform {
+	// Normalizar primero por si acaso
+	p := normalizePlatform(platform)
+	switch p {
 	case "NA1", "BR1", "LA1", "LA2":
 		return "americas"
 	case "KR", "JP1":
@@ -1555,6 +1590,8 @@ func platformToRegion(platform string) string {
 
 // GetMatchIds obtiene una lista de IDs de partidas para un jugador
 func (c *Client) GetMatchIds(platform, puuid string, count int) ([]string, error) {
+	// platformToRegion ya normaliza internamente, pero necesitamos el platform ID correcto para otras cosas si las hubiera
+	// En este caso, match-v5 usa regiones (americas, asia, etc), no platform IDs en la URL base.
 	region := platformToRegion(platform)
 	url := fmt.Sprintf("https://%s.api.riotgames.com/lol/match/v5/matches/by-puuid/%s/ids?start=0&count=%d", region, puuid, count)
 
