@@ -74,7 +74,7 @@ func (s *MetaGameService) AnalyzeChampionRotation(ctx context.Context, platform 
 	metaShiftProb := s.calculateMetaShiftProbability(freeChampions)
 
 	// Recomendaciones basadas en el análisis
-	recommendations := s.generateRecommendations(freeChampions, newPlayerChampions)
+	recommendations := s.generateRecommendations(freeChampions)
 
 	return &ChampionRotationAnalysis{
 		FreeChampions:        freeChampions,
@@ -268,10 +268,7 @@ func (s *MetaGameService) estimateBanRate(tier string) float64 {
 	}
 }
 
-// getPrimaryRole obtiene el rol primario de un campeón (deprecated - usar estimateChampionRole)
-func (s *MetaGameService) getPrimaryRole(tags []string) string {
-	return "Unknown"
-}
+
 
 // calculateRotationImpact calcula el impacto de la rotación en el meta
 func (s *MetaGameService) calculateRotationImpact(free, newPlayer []ChampionInfo) float64 {
@@ -332,7 +329,7 @@ func (s *MetaGameService) calculateMetaShiftProbability(champions []ChampionInfo
 }
 
 // generateRecommendations genera recomendaciones basadas en el análisis
-func (s *MetaGameService) generateRecommendations(free, newPlayer []ChampionInfo) []string {
+func (s *MetaGameService) generateRecommendations(free []ChampionInfo) []string {
 	var recommendations []string
 
 	// Recomendar campeones S-tier gratuitos
@@ -526,15 +523,7 @@ func (s *MetaGameService) generateMetaInsights(rotation *ChampionRotationAnalysi
 	return insights
 }
 
-// Helper function
-func contains(slice []string, item string) bool {
-	for _, s := range slice {
-		if s == item {
-			return true
-		}
-	}
-	return false
-}
+
 
 func min(a, b float64) float64 {
 	if a < b {

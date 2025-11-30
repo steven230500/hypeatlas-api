@@ -73,7 +73,7 @@ func (s *Service) SyncPatches(ctx context.Context) error {
 	// desde la API de Riot, pero por ahora usamos la fecha actual
 
 	// Guardar en base de datos
-	if err := s.savePatch(ctx, &newPatch); err != nil {
+	if err := s.savePatch(&newPatch); err != nil {
 		return fmt.Errorf("error saving patch: %w", err)
 	}
 
@@ -103,7 +103,7 @@ func (s *Service) SyncChampions(ctx context.Context, version string) error {
 }
 
 // savePatch guarda un parche en la base de datos
-func (s *Service) savePatch(ctx context.Context, patch *entities.Patch) error {
+func (s *Service) savePatch(patch *entities.Patch) error {
 	// Asignar UUID si no tiene
 	if patch.UUID == uuid.Nil {
 		patch.UUID = uuid.New()
