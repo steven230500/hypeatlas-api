@@ -446,6 +446,7 @@ func (c *Client) GetChampionRotation(platform string) (*ChampionRotationResponse
 type LeagueEntry struct {
 	SummonerID   string `json:"summonerId"`
 	SummonerName string `json:"summonerName"`
+	Puuid        string `json:"puuid"`
 	LeaguePoints int    `json:"leaguePoints"`
 	Rank         string `json:"rank"`
 	Wins         int    `json:"wins"`
@@ -1324,4 +1325,286 @@ func (c *Client) GetLeagueChampions(league string) (map[string]interface{}, erro
 	}
 
 	return leagueStats, nil
+}
+
+
+// SummonerDTO representa la información de un invocador
+type SummonerDTO struct {
+	AccountID     string `json:"accountId"`
+	ProfileIconID int    `json:"profileIconId"`
+	RevisionDate  int64  `json:"revisionDate"`
+	Name          string `json:"name"`
+	ID            string `json:"id"`
+	Puuid         string `json:"puuid"`
+	SummonerLevel int64  `json:"summonerLevel"`
+}
+
+// GetSummonerBySummonerId obtiene la información de un invocador por su ID encriptado
+func (c *Client) GetSummonerBySummonerId(platform, summonerId string) (*SummonerDTO, error) {
+	url := fmt.Sprintf("https://%s.api.riotgames.com/lol/summoner/v4/summoners/%s", platform, summonerId)
+
+	resp, err := c.makeRequest("GET", url, nil)
+	if err != nil {
+		return nil, fmt.Errorf("error making request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("API returned status %d", resp.StatusCode)
+	}
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("error reading response: %w", err)
+	}
+
+	var summoner SummonerDTO
+	if err := json.Unmarshal(body, &summoner); err != nil {
+		return nil, fmt.Errorf("error parsing response: %w", err)
+	}
+
+	return &summoner, nil
+}
+
+// --- Match V5 API ---
+
+// MatchDto representa la respuesta completa de una partida
+type MatchDto struct {
+	Metadata MetadataDto `json:"metadata"`
+	Info     InfoDto     `json:"info"`
+}
+
+// MetadataDto contiene metadatos de la partida
+type MetadataDto struct {
+	DataVersion  string   `json:"dataVersion"`
+	MatchID      string   `json:"matchId"`
+	Participants []string `json:"participants"`
+}
+
+// InfoDto contiene la información detallada de la partida
+type InfoDto struct {
+	GameCreation       int64            `json:"gameCreation"`
+	GameDuration       int64            `json:"gameDuration"`
+	GameEndTimestamp   int64            `json:"gameEndTimestamp"`
+	GameID             int64            `json:"gameId"`
+	GameMode           string           `json:"gameMode"`
+	GameName           string           `json:"gameName"`
+	GameStartTimestamp int64            `json:"gameStartTimestamp"`
+	GameType           string           `json:"gameType"`
+	GameVersion        string           `json:"gameVersion"`
+	MapID              int              `json:"mapId"`
+	Participants       []ParticipantDto `json:"participants"`
+	PlatformID         string           `json:"platformId"`
+	QueueID            int              `json:"queueId"`
+	Teams              []TeamDto        `json:"teams"`
+	TournamentCode     string           `json:"tournamentCode"`
+}
+
+// ParticipantDto contiene información de un participante
+type ParticipantDto struct {
+	Assists                     int     `json:"assists"`
+	BaronKills                  int     `json:"baronKills"`
+	BountyLevel                 int     `json:"bountyLevel"`
+	ChampExperience             int     `json:"champExperience"`
+	ChampLevel                  int     `json:"champLevel"`
+	ChampionID                  int     `json:"championId"`
+	ChampionName                string  `json:"championName"`
+	ChampionTransform           int     `json:"championTransform"`
+	ConsumablesPurchased        int     `json:"consumablesPurchased"`
+	DamageDealtToBuildings      int     `json:"damageDealtToBuildings"`
+	DamageDealtToObjectives     int     `json:"damageDealtToObjectives"`
+	DamageDealtToTurrets        int     `json:"damageDealtToTurrets"`
+	DamageSelfMitigated         int     `json:"damageSelfMitigated"`
+	Deaths                      int     `json:"deaths"`
+	DetectorWardsPlaced         int     `json:"detectorWardsPlaced"`
+	DoubleKills                 int     `json:"doubleKills"`
+	DragonKills                 int     `json:"dragonKills"`
+	FirstBloodAssist            bool    `json:"firstBloodAssist"`
+	FirstBloodKill              bool    `json:"firstBloodKill"`
+	FirstTowerAssist            bool    `json:"firstTowerAssist"`
+	FirstTowerKill              bool    `json:"firstTowerKill"`
+	GameEndedInEarlySurrender   bool    `json:"gameEndedInEarlySurrender"`
+	GameEndedInSurrender        bool    `json:"gameEndedInSurrender"`
+	GoldEarned                  int     `json:"goldEarned"`
+	GoldSpent                   int     `json:"goldSpent"`
+	IndividualPosition          string  `json:"individualPosition"`
+	InhibitorKills              int     `json:"inhibitorKills"`
+	InhibitorTakedowns          int     `json:"inhibitorTakedowns"`
+	InhibitorsLost              int     `json:"inhibitorsLost"`
+	Item0                       int     `json:"item0"`
+	Item1                       int     `json:"item1"`
+	Item2                       int     `json:"item2"`
+	Item3                       int     `json:"item3"`
+	Item4                       int     `json:"item4"`
+	Item5                       int     `json:"item5"`
+	Item6                       int     `json:"item6"`
+	ItemsPurchased              int     `json:"itemsPurchased"`
+	KillingSprees               int     `json:"killingSprees"`
+	Kills                       int     `json:"kills"`
+	Lane                        string  `json:"lane"`
+	LargestCriticalStrike       int     `json:"largestCriticalStrike"`
+	LargestKillingSpree         int     `json:"largestKillingSpree"`
+	LargestMultiKill            int     `json:"largestMultiKill"`
+	LongestTimeSpentLiving      int     `json:"longestTimeSpentLiving"`
+	MagicDamageDealt            int     `json:"magicDamageDealt"`
+	MagicDamageDealtToChampions int     `json:"magicDamageDealtToChampions"`
+	MagicDamageTaken            int     `json:"magicDamageTaken"`
+	NeutralMinionsKilled        int     `json:"neutralMinionsKilled"`
+	NexusKills                  int     `json:"nexusKills"`
+	NexusTakedowns              int     `json:"nexusTakedowns"`
+	NexusLost                   int     `json:"nexusLost"`
+	ObjectiveStolen             int     `json:"objectiveStolen"`
+	ObjectiveStolenAssists      int     `json:"objectiveStolenAssists"`
+	ParticipantID               int     `json:"participantId"`
+	PentaKills                  int     `json:"pentaKills"`
+	PhysicalDamageDealt         int     `json:"physicalDamageDealt"`
+	PhysicalDamageDealtToChampions int  `json:"physicalDamageDealtToChampions"`
+	PhysicalDamageTaken         int     `json:"physicalDamageTaken"`
+	ProfileIcon                 int     `json:"profileIcon"`
+	Puuid                       string  `json:"puuid"`
+	QuadraKills                 int     `json:"quadraKills"`
+	RiotIdGameName              string  `json:"riotIdGameName"`
+	RiotIdTagline               string  `json:"riotIdTagline"`
+	Role                        string  `json:"role"`
+	SightWardsBoughtInGame      int     `json:"sightWardsBoughtInGame"`
+	Spell1Casts                 int     `json:"spell1Casts"`
+	Spell2Casts                 int     `json:"spell2Casts"`
+	Spell3Casts                 int     `json:"spell3Casts"`
+	Spell4Casts                 int     `json:"spell4Casts"`
+	Summoner1Casts              int     `json:"summoner1Casts"`
+	Summoner1Id                 int     `json:"summoner1Id"`
+	Summoner2Casts              int     `json:"summoner2Casts"`
+	Summoner2Id                 int     `json:"summoner2Id"`
+	SummonerID                  string  `json:"summonerId"`
+	SummonerLevel               int     `json:"summonerLevel"`
+	SummonerName                string  `json:"summonerName"`
+	TeamEarlySurrendered        bool    `json:"teamEarlySurrendered"`
+	TeamID                      int     `json:"teamId"`
+	TeamPosition                string  `json:"teamPosition"`
+	TimeCCingOthers             int     `json:"timeCCingOthers"`
+	TimePlayed                  int     `json:"timePlayed"`
+	TotalDamageDealt            int     `json:"totalDamageDealt"`
+	TotalDamageDealtToChampions int     `json:"totalDamageDealtToChampions"`
+	TotalDamageShieldedOnTeammates int  `json:"totalDamageShieldedOnTeammates"`
+	TotalDamageTaken            int     `json:"totalDamageTaken"`
+	TotalHeal                   int     `json:"totalHeal"`
+	TotalHealsOnTeammates       int     `json:"totalHealsOnTeammates"`
+	TotalMinionsKilled          int     `json:"totalMinionsKilled"`
+	TotalTimeCCDealt            int     `json:"totalTimeCCDealt"`
+	TotalTimeSpentDead          int     `json:"totalTimeSpentDead"`
+	TripleKills                 int     `json:"tripleKills"`
+	TrueDamageDealt             int     `json:"trueDamageDealt"`
+	TrueDamageDealtToChampions  int     `json:"trueDamageDealtToChampions"`
+	TrueDamageTaken             int     `json:"trueDamageTaken"`
+	TurretKills                 int     `json:"turretKills"`
+	TurretTakedowns             int     `json:"turretTakedowns"`
+	TurretsLost                 int     `json:"turretsLost"`
+	UnrealKills                 int     `json:"unrealKills"`
+	VisionScore                 int     `json:"visionScore"`
+	VisionWardsBoughtInGame     int     `json:"visionWardsBoughtInGame"`
+	WardsKilled                 int     `json:"wardsKilled"`
+	WardsPlaced                 int     `json:"wardsPlaced"`
+	Win                         bool    `json:"win"`
+}
+
+// TeamDto contiene información del equipo
+type TeamDto struct {
+	Bans       []BanDto      `json:"bans"`
+	Objectives ObjectivesDto `json:"objectives"`
+	TeamID     int           `json:"teamId"`
+	Win        bool          `json:"win"`
+}
+
+// BanDto contiene información de bans
+type BanDto struct {
+	ChampionID int `json:"championId"`
+	PickTurn   int `json:"pickTurn"`
+}
+
+// ObjectivesDto contiene información de objetivos
+type ObjectivesDto struct {
+	Baron      ObjectiveDto `json:"baron"`
+	Champion   ObjectiveDto `json:"champion"`
+	Dragon     ObjectiveDto `json:"dragon"`
+	Inhibitor  ObjectiveDto `json:"inhibitor"`
+	RiftHerald ObjectiveDto `json:"riftHerald"`
+	Tower      ObjectiveDto `json:"tower"`
+}
+
+// ObjectiveDto contiene información de un objetivo específico
+type ObjectiveDto struct {
+	First bool `json:"first"`
+	Kills int  `json:"kills"`
+}
+
+// platformToRegion convierte un ID de plataforma (ej: NA1) a una región de enrutamiento (ej: americas)
+func platformToRegion(platform string) string {
+	switch platform {
+	case "NA1", "BR1", "LA1", "LA2":
+		return "americas"
+	case "KR", "JP1":
+		return "asia"
+	case "EUN1", "EUW1", "TR1", "RU":
+		return "europe"
+	case "OC1", "PH2", "SG2", "TH2", "TW2", "VN2":
+		return "sea"
+	default:
+		return "americas" // Default fallback
+	}
+}
+
+// GetMatchIds obtiene una lista de IDs de partidas para un jugador
+func (c *Client) GetMatchIds(platform, puuid string, count int) ([]string, error) {
+	region := platformToRegion(platform)
+	url := fmt.Sprintf("https://%s.api.riotgames.com/lol/match/v5/matches/by-puuid/%s/ids?start=0&count=%d", region, puuid, count)
+
+	resp, err := c.makeRequest("GET", url, nil)
+	if err != nil {
+		return nil, fmt.Errorf("error making request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("API returned status %d", resp.StatusCode)
+	}
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("error reading response: %w", err)
+	}
+
+	var matchIds []string
+	if err := json.Unmarshal(body, &matchIds); err != nil {
+		return nil, fmt.Errorf("error parsing response: %w", err)
+	}
+
+	return matchIds, nil
+}
+
+// GetMatch obtiene los detalles de una partida específica
+func (c *Client) GetMatch(platform, matchId string) (*MatchDto, error) {
+	region := platformToRegion(platform)
+	url := fmt.Sprintf("https://%s.api.riotgames.com/lol/match/v5/matches/%s", region, matchId)
+
+	resp, err := c.makeRequest("GET", url, nil)
+	if err != nil {
+		return nil, fmt.Errorf("error making request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("API returned status %d", resp.StatusCode)
+	}
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("error reading response: %w", err)
+	}
+
+	var match MatchDto
+	if err := json.Unmarshal(body, &match); err != nil {
+		return nil, fmt.Errorf("error parsing response: %w", err)
+	}
+
+	return &match, nil
 }
