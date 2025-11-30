@@ -241,6 +241,208 @@ const docTemplate = `{
                 }
             }
         },
+        "/v1/relay/events": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "relay"
+                ],
+                "summary": "Listar eventos",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "val|lol",
+                        "name": "game",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filtrar por liga",
+                        "name": "league",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "upcoming|live|past",
+                        "name": "status",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Number of items per page (default: 20, max: 100)",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Number of items to skip (default: 0)",
+                        "name": "offset",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_steven230500_hypeatlas-api_shared_http.PaginatedResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "relay"
+                ],
+                "summary": "Crear evento",
+                "parameters": [
+                    {
+                        "description": "Event data",
+                        "name": "event",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_steven230500_hypeatlas-api_domain_entities.Event"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_steven230500_hypeatlas-api_domain_entities.Event"
+                        }
+                    },
+                    "400": {
+                        "description": "validation error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/relay/events/{slug}": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "relay"
+                ],
+                "summary": "Obtener evento por slug",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Event slug",
+                        "name": "slug",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_steven230500_hypeatlas-api_domain_entities.Event"
+                        }
+                    },
+                    "404": {
+                        "description": "event not found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "relay"
+                ],
+                "summary": "Actualizar evento",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Event slug",
+                        "name": "slug",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Fields to update",
+                        "name": "updates",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "ok",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "validation error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "relay"
+                ],
+                "summary": "Eliminar evento",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Event slug",
+                        "name": "slug",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "ok",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
         "/v1/signal/champions": {
             "get": {
                 "produces": [
@@ -253,8 +455,20 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Versión del juego (ej. 14.14)",
+                        "description": "Versión del juego (ej. 14.14.1)",
                         "name": "version",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Number of items per page (default: 20, max: 100)",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Number of items to skip (default: 0)",
+                        "name": "offset",
                         "in": "query"
                     }
                 ],
@@ -262,8 +476,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": true
+                            "$ref": "#/definitions/github_com_steven230500_hypeatlas-api_shared_http.PaginatedResponse"
                         }
                     },
                     "400": {
@@ -514,12 +727,25 @@ const docTemplate = `{
                     "signal"
                 ],
                 "summary": "Listar regiones disponibles",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Number of items per page (default: 20, max: 100)",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Number of items to skip (default: 0)",
+                        "name": "offset",
+                        "in": "query"
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": true
+                            "$ref": "#/definitions/github_com_steven230500_hypeatlas-api_shared_http.PaginatedResponse"
                         }
                     },
                     "500": {
@@ -1760,11 +1986,25 @@ const docTemplate = `{
                     "riot"
                 ],
                 "summary": "Get available game versions",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Number of items per page (default: 20, max: 100)",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Number of items to skip (default: 0)",
+                        "name": "offset",
+                        "in": "query"
+                    }
+                ],
                 "responses": {
                     "200": {
-                        "description": "List of game versions",
+                        "description": "List of game versions with pagination",
                         "schema": {
-                            "$ref": "#/definitions/modules_signal_infra_http.GameVersionsResponse"
+                            "$ref": "#/definitions/github_com_steven230500_hypeatlas-api_shared_http.PaginatedResponse"
                         }
                     },
                     "500": {
@@ -2097,6 +2337,32 @@ const docTemplate = `{
                 }
             }
         },
+        "github_com_steven230500_hypeatlas-api_shared_http.PaginatedResponse": {
+            "type": "object",
+            "properties": {
+                "items": {},
+                "pagination": {
+                    "$ref": "#/definitions/github_com_steven230500_hypeatlas-api_shared_http.PaginationMeta"
+                }
+            }
+        },
+        "github_com_steven230500_hypeatlas-api_shared_http.PaginationMeta": {
+            "type": "object",
+            "properties": {
+                "hasMore": {
+                    "type": "boolean"
+                },
+                "limit": {
+                    "type": "integer"
+                },
+                "offset": {
+                    "type": "integer"
+                },
+                "total": {
+                    "type": "integer"
+                }
+            }
+        },
         "modules_relay_infra_http.CoStreamsResp": {
             "type": "object",
             "properties": {
@@ -2314,20 +2580,6 @@ const docTemplate = `{
                 }
             }
         },
-        "modules_signal_infra_http.GameVersionsResponse": {
-            "type": "object",
-            "properties": {
-                "success": {
-                    "type": "boolean"
-                },
-                "versions": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                }
-            }
-        },
         "modules_signal_infra_http.GamesResponse": {
             "type": "object",
             "properties": {
@@ -2363,10 +2615,7 @@ const docTemplate = `{
         "modules_signal_infra_http.ItemsResponse": {
             "type": "object",
             "properties": {
-                "data": {
-                    "type": "object",
-                    "additionalProperties": true
-                },
+                "data": {},
                 "success": {
                     "type": "boolean"
                 },

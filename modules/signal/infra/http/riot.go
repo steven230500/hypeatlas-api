@@ -519,9 +519,9 @@ func (h *RiotHandler) getChampionsList(w http.ResponseWriter, r *http.Request) {
 }
 
 type ItemsResponse struct {
-	Success bool                   `json:"success"`
-	Version string                 `json:"version"`
-	Data    map[string]interface{} `json:"data"`
+	Success bool        `json:"success"`
+	Version string      `json:"version"`
+	Data    interface{} `json:"data"`
 }
 
 // @Summary Get items data for a specific version
