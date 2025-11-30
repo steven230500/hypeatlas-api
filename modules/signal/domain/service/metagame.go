@@ -542,3 +542,10 @@ func min(a, b float64) float64 {
 	}
 	return b
 }
+
+// AnalyzeRegionMeta analiza el meta de una región basado en partidas de Challenger
+func (s *MetaGameService) AnalyzeRegionMeta(ctx context.Context, platform string) (*riot.RegionMetaReport, error) {
+	// Delegar al cliente de Riot
+	// Usamos valores por defecto razonables: 5 jugadores, 3 partidas cada uno para no saturar la API
+	return s.riotSvc.GetClient().AnalyzeRegionMeta(platform, 5, 3)
+}

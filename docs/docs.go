@@ -1518,6 +1518,44 @@ const docTemplate = `{
                 }
             }
         },
+        "/v1/signal/riot/metagame/region/{platform}": {
+            "get": {
+                "description": "Analyze the meta (top champions, bans) for a specific region based on Challenger matches",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "riot"
+                ],
+                "summary": "Analyze regional meta",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Platform ID (e.g., KR, NA1, EUW1)",
+                        "name": "platform",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Regional meta report",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_steven230500_hypeatlas-api_providers_riot.RegionMetaReport"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
         "/v1/signal/riot/metagame/report/{platform}": {
             "get": {
                 "description": "Get complete meta-game analysis combining champion rotation and league statistics with insights and recommendations",
@@ -2334,6 +2372,87 @@ const docTemplate = `{
                 },
                 "updated_at": {
                     "type": "string"
+                }
+            }
+        },
+        "github_com_steven230500_hypeatlas-api_providers_riot.ChampionMetaStat": {
+            "type": "object",
+            "properties": {
+                "ban_rate": {
+                    "type": "number"
+                },
+                "bans": {
+                    "type": "integer"
+                },
+                "games": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "pick_rate": {
+                    "type": "number"
+                },
+                "win_rate": {
+                    "type": "number"
+                },
+                "wins": {
+                    "type": "integer"
+                }
+            }
+        },
+        "github_com_steven230500_hypeatlas-api_providers_riot.CompositionStat": {
+            "type": "object",
+            "properties": {
+                "champions": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "games": {
+                    "type": "integer"
+                },
+                "win_rate": {
+                    "type": "number"
+                },
+                "wins": {
+                    "type": "integer"
+                }
+            }
+        },
+        "github_com_steven230500_hypeatlas-api_providers_riot.RegionMetaReport": {
+            "type": "object",
+            "properties": {
+                "analyzed_matches": {
+                    "type": "integer"
+                },
+                "analyzed_players": {
+                    "type": "integer"
+                },
+                "common_compositions": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_steven230500_hypeatlas-api_providers_riot.CompositionStat"
+                    }
+                },
+                "region": {
+                    "type": "string"
+                },
+                "top_bans": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_steven230500_hypeatlas-api_providers_riot.ChampionMetaStat"
+                    }
+                },
+                "top_champions": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_steven230500_hypeatlas-api_providers_riot.ChampionMetaStat"
+                    }
                 }
             }
         },

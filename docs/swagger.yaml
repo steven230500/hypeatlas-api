@@ -211,6 +211,59 @@ definitions:
       updated_at:
         type: string
     type: object
+  github_com_steven230500_hypeatlas-api_providers_riot.ChampionMetaStat:
+    properties:
+      ban_rate:
+        type: number
+      bans:
+        type: integer
+      games:
+        type: integer
+      id:
+        type: integer
+      name:
+        type: string
+      pick_rate:
+        type: number
+      win_rate:
+        type: number
+      wins:
+        type: integer
+    type: object
+  github_com_steven230500_hypeatlas-api_providers_riot.CompositionStat:
+    properties:
+      champions:
+        items:
+          type: string
+        type: array
+      games:
+        type: integer
+      win_rate:
+        type: number
+      wins:
+        type: integer
+    type: object
+  github_com_steven230500_hypeatlas-api_providers_riot.RegionMetaReport:
+    properties:
+      analyzed_matches:
+        type: integer
+      analyzed_players:
+        type: integer
+      common_compositions:
+        items:
+          $ref: '#/definitions/github_com_steven230500_hypeatlas-api_providers_riot.CompositionStat'
+        type: array
+      region:
+        type: string
+      top_bans:
+        items:
+          $ref: '#/definitions/github_com_steven230500_hypeatlas-api_providers_riot.ChampionMetaStat'
+        type: array
+      top_champions:
+        items:
+          $ref: '#/definitions/github_com_steven230500_hypeatlas-api_providers_riot.ChampionMetaStat'
+        type: array
+    type: object
   github_com_steven230500_hypeatlas-api_shared_http.PaginatedResponse:
     properties:
       items: {}
@@ -1599,6 +1652,32 @@ paths:
           schema:
             type: string
       summary: Analyze league rankings and statistics
+      tags:
+      - riot
+  /v1/signal/riot/metagame/region/{platform}:
+    get:
+      consumes:
+      - application/json
+      description: Analyze the meta (top champions, bans) for a specific region based
+        on Challenger matches
+      parameters:
+      - description: Platform ID (e.g., KR, NA1, EUW1)
+        in: path
+        name: platform
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Regional meta report
+          schema:
+            $ref: '#/definitions/github_com_steven230500_hypeatlas-api_providers_riot.RegionMetaReport'
+        "500":
+          description: Internal server error
+          schema:
+            type: string
+      summary: Analyze regional meta
       tags:
       - riot
   /v1/signal/riot/metagame/report/{platform}:

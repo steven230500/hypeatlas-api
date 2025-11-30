@@ -50,6 +50,7 @@ func (h *RiotHandler) Register(r chi.Router) {
 		r.Get("/metagame/rotation/{platform}", h.analyzeChampionRotation)
 		r.Get("/metagame/league/{platform}/{queue}", h.analyzeLeagueRankings)
 		r.Get("/metagame/report/{platform}", h.generateMetaReport)
+		r.Get("/metagame/region/{platform}", h.analyzeRegionMeta) // New route
 		r.Get("/games", h.getGames)
 		r.Get("/leagues/{platform}", h.getLeagues)
 		r.Get("/regions", h.getRegions)
@@ -1112,4 +1113,29 @@ func (h *RiotHandler) handleRiotError(w http.ResponseWriter, err error, context 
 		return
 	}
 	http.Error(w, fmt.Sprintf("Error %s: %v", context, err), http.StatusInternalServerError)
+}
+// @Summary Analyze regional meta
+// @Description Analyze the meta (top champions, bans) for a specific region based on Challenger matches
+// @Tags riot
+// @Accept json
+// @Produce json
+// @Param platform path string true "Platform ID (e.g., KR, NA1, EUW1)"
+// @Success 200 {object} riot.RegionMetaReport "Regional meta report"
+// @Failure 500 {string} string "Internal server error"
+// @Router /v1/signal/riot/metagame/region/{platform} [get]
+func (h *RiotHandler) analyzeRegionMeta(w http.ResponseWriter, r *http.Request) {
+	platform := chi.URLParam(r, "platform")
+	if platform == "" {
+		http.Error(w, "Platform parameter is required", http.StatusBadRequest)
+		return
+	}
+
+	report, err := h.metaGameSvc.AnalyzeRegionMeta(r.Context(), platform)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Error analyzing region meta: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(w).Encode(report)
 }
